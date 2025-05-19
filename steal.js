@@ -1,14 +1,17 @@
-(function () {
-  const output = document.getElementById("output");
-
+window.onload = function () {
   try {
-    if (typeof WebEngageMobileInterface !== "undefined") {
-      const result = WebEngageMobileInterface.getUserId?.();
-      output.innerText = "getUserId(): " + result;
+    const payload = JSON.stringify({
+      action: "getToken",
+      data: {}
+    });
+
+    if (window.AndroidJSI && AndroidJSI.onReceiveMessage) {
+      AndroidJSI.onReceiveMessage(payload);
+      document.getElementById("output").textContent = "Payload sent: " + payload;
     } else {
-      output.innerText = "WebEngageMobileInterface not found.";
+      document.getElementById("output").textContent = "JS interface not available.";
     }
   } catch (e) {
-    output.innerText = "Error: " + e.message;
+    document.getElementById("output").textContent = "Error: " + e.message;
   }
-})();
+};
