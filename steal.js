@@ -4,7 +4,7 @@ function log(msg) {
 
 function tryExploit() {
   const payload = {
-    action: "ACCESS_TOKEN_REFRESH_TOKEN_UPDATE",  // or a valid action like "getToken" from your app
+    action: "TWO_FACTOR_EXPIRE",  // or a valid action like "getToken" from your app
     data: {}
   };
 
