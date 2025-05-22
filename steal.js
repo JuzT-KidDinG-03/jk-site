@@ -1,9 +1,7 @@
 const actions = [
-  // "BACK", // risky
   "SHARE",
   "DEEPLINK",
-  "EXTERNAL_AP_LINK",
-  "TWO_FACTOR_EXPIRE",
+  "EXTERNAL_AP_LINK"
 ];
 
 function log(msg) {
