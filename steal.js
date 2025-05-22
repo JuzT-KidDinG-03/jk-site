@@ -1,6 +1,4 @@
 const actions = [
-  "SHARE",
-  "DEEPLINK",
   "EXTERNAL_AP_LINK"
 ];
 
