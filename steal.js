@@ -1,5 +1,10 @@
 const actions = [
-  "EXTERNAL_AP_LINK"
+   "ORIENTATION_CHANGE",
+  "EXTERNAL_AP_LINK",
+  "REDIRECT_TO_SETTINGS",
+  "BUZZ_QUERY_CLICKED",
+  "WEBVIEW_INTERACTABLE",
+  "WEBVIEW_FCP"
 ];
 
 function log(msg) {
