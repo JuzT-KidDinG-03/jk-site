@@ -1,14 +1,355 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>WebView JSBridge Tester</title>
+    <title>WebView JSBridge Security Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .result {
+            background-color: #fff;
+            border: 2px solid #007bff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            word-wrap: break-word;
+        }
+        .success {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        .warning {
+            border-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        .danger {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-  <h2>WebView JSBridge Action Tester</h2>
-  <button onclick="testActions()">Run All JSBridge Actions</button>
-  <pre id="log"></pre>
+    <h1>🔒 WebView JSBridge Security Test</h1>
+    <p>Testing for exposed JavaScript interfaces and sensitive data leakage</p>
+    
+    <button onclick="runAllTests()">🚀 Run All Security Tests</button>
+    
+    <div id="results"></div>
 
-  <script src="steal.js"></script>
+    <script>
+        let resultContainer = document.getElementById('results');
+        let testResults = [];
+
+        function addResult(title, content, type = 'result') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            resultContainer.appendChild(div);
+            console.log(`${title}:`, content);
+        }
+
+        function runAllTests() {
+            resultContainer.innerHTML = '';
+            testResults = [];
+            
+            addResult("🔍 Security Test Started", "Scanning for vulnerabilities...", "warning");
+            
+            // Test 1: Check for injected parameters
+            testInjectedParameters();
+            
+            // Test 2: Check JavaScript interfaces
+            testJavaScriptInterfaces();
+            
+            // Test 3: Check cookie access
+            testCookieAccess();
+            
+            // Test 4: Check window/document properties
+            testWindowProperties();
+            
+            // Test 5: Try to access local storage
+            testLocalStorage();
+            
+            // Test 6: Check for global variables
+            testGlobalVariables();
+            
+            // Test 7: Try JSBridge actions
+            testJSBridgeActions();
+            
+            // Summary
+            setTimeout(() => {
+                addResult("📊 Test Summary", 
+                    `Total vulnerabilities found: ${testResults.filter(r => r.vulnerable).length}`, 
+                    testResults.filter(r => r.vulnerable).length > 0 ? "danger" : "success");
+            }, 1000);
+        }
+
+        function testInjectedParameters() {
+            let found = false;
+            let details = [];
+            
+            // Check for webviewInjectedParams
+            if (typeof window.webviewInjectedParams !== 'undefined') {
+                found = true;
+                details.push("🚨 window.webviewInjectedParams found!");
+                details.push(`<pre>${JSON.stringify(window.webviewInjectedParams, null, 2)}</pre>`);
+                testResults.push({test: "injected_params", vulnerable: true});
+            }
+            
+            // Check for other common injection patterns
+            const commonInjections = ['webview_injected_data', 'growwData', 'appData', 'userData'];
+            commonInjections.forEach(key => {
+                if (typeof window[key] !== 'undefined') {
+                    found = true;
+                    details.push(`🚨 window.${key} found: ${JSON.stringify(window[key])}`);
+                }
+            });
+            
+            if (!found) {
+                details.push("✅ No injected parameters found");
+                testResults.push({test: "injected_params", vulnerable: false});
+            }
+            
+            addResult("1️⃣ Injected Parameters Test", details.join('<br>'), found ? "danger" : "success");
+        }
+
+        function testJavaScriptInterfaces() {
+            const interfaces = [
+                'AndroidJSI', 
+                'FORMOUT', 
+                'webengage', 
+                'SendEventToParent',
+                'WebEngageMobileBridge'
+            ];
+            
+            let foundInterfaces = [];
+            
+            interfaces.forEach(interfaceName => {
+                if (typeof window[interfaceName] !== 'undefined') {
+                    foundInterfaces.push(interfaceName);
+                    
+                    // Try to get methods of the interface
+                    try {
+                        const methods = Object.getOwnPropertyNames(window[interfaceName]);
+                        foundInterfaces.push(`  └─ Methods: ${methods.join(', ')}`);
+                    } catch (e) {
+                        foundInterfaces.push(`  └─ Methods: Unable to enumerate`);
+                    }
+                }
+            });
+            
+            const vulnerable = foundInterfaces.length > 0;
+            testResults.push({test: "js_interfaces", vulnerable});
+            
+            addResult("2️⃣ JavaScript Interfaces Test", 
+                vulnerable ? 
+                    `🚨 Found exposed interfaces:<br>${foundInterfaces.join('<br>')}` : 
+                    "✅ No exposed JavaScript interfaces found",
+                vulnerable ? "danger" : "success");
+        }
+
+        function testCookieAccess() {
+            const cookies = document.cookie;
+            const hasCookies = cookies && cookies.trim().length > 0;
+            
+            testResults.push({test: "cookies", vulnerable: hasCookies});
+            
+            addResult("3️⃣ Cookie Access Test", 
+                hasCookies ? 
+                    `🚨 Cookies accessible: <pre>${cookies}</pre>` : 
+                    "✅ No cookies accessible (expected for cross-domain)",
+                hasCookies ? "danger" : "success");
+        }
+
+        function testWindowProperties() {
+            const sensitiveProps = [];
+            
+            // Check for common WebView properties
+            const propsToCheck = [
+                'location', 'navigator', 'screen', 'history',
+                'localStorage', 'sessionStorage'
+            ];
+            
+            propsToCheck.forEach(prop => {
+                if (typeof window[prop] !== 'undefined') {
+                    try {
+                        const value = window[prop];
+                        if (prop === 'navigator') {
+                            sensitiveProps.push(`navigator.userAgent: ${navigator.userAgent}`);
+                            sensitiveProps.push(`navigator.platform: ${navigator.platform}`);
+                        } else if (prop === 'location') {
+                            sensitiveProps.push(`location.href: ${location.href}`);
+                        } else {
+                            sensitiveProps.push(`${prop}: Available`);
+                        }
+                    } catch (e) {
+                        sensitiveProps.push(`${prop}: Access restricted`);
+                    }
+                }
+            });
+            
+            addResult("4️⃣ Window Properties Test", 
+                `<pre>${sensitiveProps.join('\n')}</pre>`, 
+                "warning");
+        }
+
+        function testLocalStorage() {
+            let storageData = [];
+            
+            try {
+                // Test localStorage
+                if (typeof localStorage !== 'undefined') {
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        const value = localStorage.getItem(key);
+                        storageData.push(`localStorage.${key}: ${value.substring(0, 100)}...`);
+                    }
+                }
+                
+                // Test sessionStorage
+                if (typeof sessionStorage !== 'undefined') {
+                    for (let i = 0; i < sessionStorage.length; i++) {
+                        const key = sessionStorage.key(i);
+                        const value = sessionStorage.getItem(key);
+                        storageData.push(`sessionStorage.${key}: ${value.substring(0, 100)}...`);
+                    }
+                }
+            } catch (e) {
+                storageData.push(`Storage access error: ${e.message}`);
+            }
+            
+            const hasStorage = storageData.length > 0;
+            testResults.push({test: "storage", vulnerable: hasStorage});
+            
+            addResult("5️⃣ Local Storage Test", 
+                hasStorage ? 
+                    `🚨 Storage data found:<br><pre>${storageData.join('\n')}</pre>` : 
+                    "✅ No storage data accessible",
+                hasStorage ? "danger" : "success");
+        }
+
+        function testGlobalVariables() {
+            const globalVars = [];
+            
+            // Check for common global variables
+            const commonGlobals = [
+                'groww', 'auth', 'user', 'session', 'token', 'api',
+                'config', 'settings', 'app', 'webview', 'bridge'
+            ];
+            
+            commonGlobals.forEach(varName => {
+                if (typeof window[varName] !== 'undefined') {
+                    globalVars.push(`window.${varName}: ${typeof window[varName]}`);
+                }
+            });
+            
+            // Check for variables with sensitive-looking names
+            for (let prop in window) {
+                if (prop.toLowerCase().includes('token') || 
+                    prop.toLowerCase().includes('auth') || 
+                    prop.toLowerCase().includes('session') ||
+                    prop.toLowerCase().includes('user') ||
+                    prop.toLowerCase().includes('device')) {
+                    globalVars.push(`window.${prop}: ${typeof window[prop]}`);
+                }
+            }
+            
+            const hasGlobals = globalVars.length > 0;
+            testResults.push({test: "globals", vulnerable: hasGlobals});
+            
+            addResult("6️⃣ Global Variables Test", 
+                hasGlobals ? 
+                    `🚨 Suspicious globals found:<br><pre>${globalVars.join('\n')}</pre>` : 
+                    "✅ No suspicious global variables found",
+                hasGlobals ? "danger" : "success");
+        }
+
+        function testJSBridgeActions() {
+            const actions = [];
+            
+            // Test AndroidJSI
+            if (typeof window.AndroidJSI !== 'undefined') {
+                try {
+                    // Try to call onReceiveMessage with a test payload
+                    const testPayload = '{"action":"TEST", "data":"security_test"}';
+                    window.AndroidJSI.onReceiveMessage(testPayload);
+                    actions.push("✅ AndroidJSI.onReceiveMessage() callable");
+                } catch (e) {
+                    actions.push(`❌ AndroidJSI.onReceiveMessage() error: ${e.message}`);
+                }
+            }
+            
+            // Test FORMOUT
+            if (typeof window.FORMOUT !== 'undefined') {
+                try {
+                    window.FORMOUT.processFormData("test_url", "test_data");
+                    actions.push("✅ FORMOUT.processFormData() callable");
+                } catch (e) {
+                    actions.push(`❌ FORMOUT.processFormData() error: ${e.message}`);
+                }
+            }
+            
+            // Test SendEventToParent
+            if (typeof window.SendEventToParent !== 'undefined') {
+                try {
+                    window.SendEventToParent.parseEvents('{"test":"data"}');
+                    actions.push("✅ SendEventToParent.parseEvents() callable");
+                } catch (e) {
+                    actions.push(`❌ SendEventToParent.parseEvents() error: ${e.message}`);
+                }
+            }
+            
+            const vulnerable = actions.some(action => action.includes("✅"));
+            testResults.push({test: "jsbridge_actions", vulnerable});
+            
+            addResult("7️⃣ JSBridge Actions Test", 
+                actions.length > 0 ? 
+                    actions.join('<br>') : 
+                    "✅ No JSBridge interfaces to test",
+                vulnerable ? "danger" : "success");
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                addResult("🔄 Auto-running tests in 2 seconds...", "Page loaded successfully", "warning");
+                setTimeout(runAllTests, 2000);
+            }, 500);
+        });
+
+        // Also log everything to console for debugging
+        console.log("Security test page loaded. Check console for detailed output.");
+        console.log("Window object keys:", Object.keys(window));
+    </script>
 </body>
 </html>
